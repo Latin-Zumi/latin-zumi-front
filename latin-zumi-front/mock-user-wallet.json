@@ -1,0 +1,45 @@
+{
+  "user": {
+    "id": 1,
+    "nombre": "Diego Pérez",
+    "email": "diego.perez@example.com",
+    "pais": "Argentina",
+    "moneda_preferida": "USD",
+    "fecha_registro": "2026-10-21T15:30:00",
+    "roles": ["user"],
+    "estado": "activo",
+    "auth_token": ""
+  },
+  "balances": [
+    { "wallet_id": 1, "currency": "ARS", "amount": "145200.00" },
+    { "wallet_id": 1, "currency": "COP", "amount": "1350000.00" },
+    { "wallet_id": 1, "currency": "USD", "amount": "1200.50" },
+    { "wallet_id": 1, "currency": "EUR", "amount": "850.75" }
+  ],
+  "transactions": [
+    {
+      "id": 101,
+      "user_id": 1,
+      "type": "exchange",
+      "from_currency": "USD",
+      "to_currency": "EUR",
+      "from_amount": "100.00",
+      "to_amount": "91.25",
+      "rate_applied": "0.9125",
+      "status": "completed",
+      "created_at": "2026-10-21T15:25:00"
+    },
+    {
+      "id": 102,
+      "user_id": 1,
+      "type": "deposit",
+      "from_currency": "USD",
+      "to_currency": null,
+      "from_amount": "500.00",
+      "to_amount": "500.00",
+      "rate_applied": null,
+      "status": "completed",
+      "created_at": "2026-10-20T09:30:00"
+    }
+  ]
+}
