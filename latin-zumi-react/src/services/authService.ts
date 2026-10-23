@@ -6,6 +6,11 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterData extends LoginCredentials {
+  nombre: string;
+  pais: string;
+}
+
 export interface AuthUser {
   id: number;
   nombre: string;
@@ -62,6 +67,32 @@ export async function login(credentials: LoginCredentials): Promise<Session> {
 
   const data = (await response.json()) as Session;
   const session: Session = { token: data.token, user: data.user };
+  saveSession(session);
+  return session;
+}
+
+export async function register(data: RegisterData): Promise<Session> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new AuthError('No pudimos conectar con el servidor. Probá de nuevo.');
+  }
+
+  if (!response.ok) {
+    throw new AuthError(
+      response.status === 409
+        ? 'Ya existe una cuenta con ese email.'
+        : 'No pudimos crear la cuenta. Probá de nuevo.',
+    );
+  }
+
+  const body = (await response.json()) as Session;
+  const session: Session = { token: body.token, user: body.user };
   saveSession(session);
   return session;
 }
