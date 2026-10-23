@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold text-foreground;
+  }
+
+  a {
+    @apply text-primary underline;
+
+    &:hover {
+      @apply text-primary-hover;
+    }
+  }
+
+  ul, ol {
+    @apply list-disc list-inside text-foreground;
+  }
+
+  button {
+    @apply rounded-md px-4 py-2 font-medium transition-colors;
+  }
+
+  input, select, textarea {
+    @apply border border-border rounded-sm px-3 py-2;
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #2459c4;
+    }
+  }
+
+  img {
+    @apply max-w-full h-auto rounded-md;
+  }
+}
