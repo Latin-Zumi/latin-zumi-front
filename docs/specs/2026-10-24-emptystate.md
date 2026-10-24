@@ -15,7 +15,7 @@ Implementar un componente `EmptyState` configurable:
 - Usar `role="status"` y `aria-live="polite"` para anunciar el estado a lectores de pantalla.
 
 ## Archivos afectados
-- `src/components/states/Empystate.tsx`
+- `src/components/states/EmptyState.tsx`
 - `tests/EmptyState.test.tsx`
 
 ## Pasos
