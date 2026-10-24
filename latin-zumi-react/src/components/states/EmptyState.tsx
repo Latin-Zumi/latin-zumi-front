@@ -1,3 +1,5 @@
+import Button from "../ui/Button";
+
 type EmptyStateProps = {
   title: string;
   description?: string;
@@ -23,8 +25,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       <p>No tenés fondos disponibles en tu billetera.</p>
     )}
     {actionLabel && onAction && (
-      <button onClick={onAction}>{actionLabel}</button>
+      <Button variant="solid" onClick={onAction}>
+        {actionLabel}
+      </Button>
     )}
   </div>
 );
-  

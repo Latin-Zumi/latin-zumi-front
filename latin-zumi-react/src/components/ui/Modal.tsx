@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import Button from "./Button";
 
 type ModalProps = {
   isOpen: boolean;
@@ -65,7 +66,7 @@ export function Modal({
         </header>
         <div className="dialog-body">{children}</div>
         <footer className="dialog-footer">
-          {footer ?? <button type="button" className="button button--quiet" onClick={onClose}>Cerrar</button>}
+          {footer ?? <Button variant="solid" onClick={onClose}>Cerrar</Button>}
         </footer>
       </section>
     </div>,

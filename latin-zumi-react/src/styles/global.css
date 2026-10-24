@@ -39,3 +39,102 @@
     @apply max-w-full h-auto rounded-md;
   }
 }
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground cursor-pointer;
+
+    &:hover:not(:disabled) {
+      @apply bg-primary-hover;
+    }
+
+    &:disabled {
+      @apply opacity-60 cursor-not-allowed;
+    }
+  }
+
+  .btn-link {
+    @apply inline-flex items-center justify-center rounded-md font-medium no-underline;
+  }
+
+  .btn-sm {
+    @apply text-sm px-3 py-1;
+  }
+
+  .btn-md {
+    @apply text-base;
+  }
+
+  .btn-lg {
+    @apply text-lg px-6 py-3;
+  }
+
+  .ui-spinner {
+    @apply inline-block rounded-full border-2 border-current border-t-transparent animate-spin;
+  }
+
+  .ui-spinner--sm {
+    @apply w-4 h-4;
+  }
+
+  .ui-spinner--md {
+    @apply w-6 h-6;
+  }
+
+  .ui-spinner--lg {
+    @apply w-10 h-10;
+  }
+
+  .input-container {
+    @apply flex flex-col gap-1 mb-4;
+  }
+
+  .input-label {
+    @apply text-sm font-medium;
+  }
+
+  .input-field--error {
+    @apply border-danger;
+  }
+
+  .input-error,
+  .form-error {
+    @apply text-sm text-danger;
+  }
+
+  .state-container {
+    @apply flex flex-col items-center gap-3 p-6 text-center;
+  }
+
+  .loading-state {
+    @apply flex flex-col items-center gap-2 p-6 text-muted;
+  }
+
+  .loading-state--inline {
+    @apply flex-row p-0;
+  }
+
+  .dialog-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4;
+  }
+
+  .dialog-panel {
+    @apply w-full max-w-md rounded-lg bg-surface p-6 shadow-lg;
+  }
+
+  .dialog-header {
+    @apply mb-4 flex items-center justify-between gap-4;
+  }
+
+  .dialog-close {
+    @apply ml-auto bg-transparent px-2 py-0 text-2xl leading-none text-muted cursor-pointer;
+  }
+
+  .dialog-body {
+    @apply mb-6;
+  }
+
+  .dialog-footer {
+    @apply flex justify-end gap-2;
+  }
+}
