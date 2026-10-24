@@ -44,6 +44,10 @@
   .btn {
     @apply inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground cursor-pointer;
 
+    &:is(a) {
+      @apply rounded-md px-4 py-2 font-medium no-underline text-primary-foreground;
+    }
+
     &:hover:not(:disabled) {
       @apply bg-primary-hover;
     }
@@ -136,5 +140,50 @@
 
   .dialog-footer {
     @apply flex justify-end gap-2;
+  }
+
+  .app-layout {
+    @apply min-h-screen flex flex-col;
+  }
+
+  .app-main {
+    @apply flex-1 mx-auto w-full max-w-5xl p-4;
+  }
+
+  .site-header {
+    @apply bg-surface shadow-sm;
+  }
+
+  .site-header__inner {
+    @apply mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-4 py-3;
+  }
+
+  .site-brand {
+    @apply text-xl font-bold no-underline text-foreground;
+
+    &:hover {
+      @apply text-foreground;
+    }
+  }
+
+  .site-nav {
+    @apply flex flex-1 flex-wrap items-center gap-4;
+  }
+
+  .site-nav__link {
+    @apply no-underline;
+
+    &.is-active {
+      @apply font-bold;
+    }
+  }
+
+  .site-actions,
+  .account-actions {
+    @apply flex items-center gap-3;
+  }
+
+  .account-identity__name {
+    @apply text-sm text-muted;
   }
 }
