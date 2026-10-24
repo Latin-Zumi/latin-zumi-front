@@ -1,11 +1,12 @@
 # Spec: ErrorState para la billetera
-Fecha
+
+# Fecha
 2026-10-24
 
-Problema
+# Problema
 Cuando ocurre un error en la billetera (ej. fallo al cargar transacciones, error de conexión con el servicio de pagos), el usuario necesita un mensaje claro y accesible que explique el problema y, cuando corresponda, le permita reintentar la acción.
 
-Solución propuesta
+# Solución propuesta
 Implementar un componente ErrorState configurable:
 
 Aceptar message como texto obligatorio para mostrar el error.
@@ -21,7 +22,7 @@ src/components/states/ErrorState.tsx
 
 tests/ErrorState.test.tsx
 
-Pasos
+# Pasos
 Definir las props del componente (message, onRetry).
 
 Renderizar el mensaje de error dentro de un contenedor con role="alert".
@@ -30,7 +31,7 @@ Mostrar el botón de reintento solo si se proporciona onRetry.
 
 Exportar el componente.
 
-Cómo probar
+# Cómo probar
 [ ] Renderizar ErrorState con message="No se pudo cargar el balance" y verificar que muestre el texto.
 
 [ ] Renderizar ErrorState con onRetry y verificar que aparezca el botón “Reintentar”.
@@ -39,7 +40,7 @@ Cómo probar
 
 [ ] Simular clic en el botón y confirmar que se ejecuta el callback onRetry.
 
-Riesgos / notas
+# Riesgos / notas
 El mensaje debe ser claro y conciso.
 
 El botón de reintento solo debe mostrarse si se pasa onRetry.
