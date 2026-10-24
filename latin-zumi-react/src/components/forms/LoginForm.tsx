@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { AuthError, login, type Session } from '../../services/authService';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
 
 const loginSchema = z.object({
   email: z.string().email('Ingresá un email válido'),
@@ -52,35 +54,37 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div>
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-        />
-        {fieldErrors.email && <p role="alert">{fieldErrors.email}</p>}
-      </div>
+      <Input
+        id="email"
+        label="Email"
+        type="email"
+        autoComplete="email"
+        value={form.email}
+        disabled={loading}
+        error={fieldErrors.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })}
+      />
 
-      <div>
-        <label htmlFor="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-        />
-        {fieldErrors.password && <p role="alert">{fieldErrors.password}</p>}
-      </div>
+      <Input
+        id="password"
+        label="Contraseña"
+        type="password"
+        autoComplete="current-password"
+        value={form.password}
+        disabled={loading}
+        error={fieldErrors.password}
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+      />
 
-      {formError && <p role="alert">{formError}</p>}
+      {formError && (
+        <p role="alert" className="form-error">
+          {formError}
+        </p>
+      )}
 
-      <button type="submit" disabled={loading}>
-        {loading ? 'Ingresando...' : 'Ingresar'}
-      </button>
+      <Button variant="solid" type="submit" loading={loading}>
+        Ingresar
+      </Button>
     </form>
   );
 }

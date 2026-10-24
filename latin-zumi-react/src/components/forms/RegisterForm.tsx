@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { AuthError, register, type Session } from '../../services/authService';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
 
 const registerSchema = z.object({
   nombre: z.string().min(2, 'Ingresá tu nombre'),
@@ -61,34 +63,37 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div>
-        <label htmlFor="nombre">Nombre</label>
-        <input
-          id="nombre"
-          autoComplete="name"
-          value={form.nombre}
-          onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-        />
-        {fieldErrors.nombre && <p role="alert">{fieldErrors.nombre}</p>}
-      </div>
+      <Input
+        id="nombre"
+        label="Nombre"
+        autoComplete="name"
+        value={form.nombre}
+        disabled={loading}
+        error={fieldErrors.nombre}
+        onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+      />
 
-      <div>
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-        />
-        {fieldErrors.email && <p role="alert">{fieldErrors.email}</p>}
-      </div>
+      <Input
+        id="email"
+        label="Email"
+        type="email"
+        autoComplete="email"
+        value={form.email}
+        disabled={loading}
+        error={fieldErrors.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })}
+      />
 
-      <div>
-        <label htmlFor="pais">País</label>
+      <div className="input-container">
+        <label htmlFor="pais" className="input-label">
+          País
+        </label>
         <select
           id="pais"
           value={form.pais}
+          disabled={loading}
+          aria-invalid={!!fieldErrors.pais}
+          aria-describedby={fieldErrors.pais ? 'pais-error' : undefined}
           onChange={(e) => setForm({ ...form, pais: e.target.value })}
         >
           <option value="">Elegí un país</option>
@@ -96,26 +101,33 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
           <option value="Colombia">Colombia</option>
           <option value="Otro">Otro</option>
         </select>
-        {fieldErrors.pais && <p role="alert">{fieldErrors.pais}</p>}
+        {fieldErrors.pais && (
+          <span id="pais-error" className="input-error" role="alert">
+            {fieldErrors.pais}
+          </span>
+        )}
       </div>
 
-      <div>
-        <label htmlFor="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-        />
-        {fieldErrors.password && <p role="alert">{fieldErrors.password}</p>}
-      </div>
+      <Input
+        id="password"
+        label="Contraseña"
+        type="password"
+        autoComplete="new-password"
+        value={form.password}
+        disabled={loading}
+        error={fieldErrors.password}
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+      />
 
-      {formError && <p role="alert">{formError}</p>}
+      {formError && (
+        <p role="alert" className="form-error">
+          {formError}
+        </p>
+      )}
 
-      <button type="submit" disabled={loading}>
-        {loading ? 'Creando cuenta...' : 'Crear cuenta'}
-      </button>
+      <Button variant="solid" type="submit" loading={loading}>
+        Crear cuenta
+      </Button>
     </form>
   );
 }
