@@ -38,7 +38,10 @@ dist-ssr/
 
 # ---------- React / JS ----------
 *.env
-.env.*
+.env.local
+.env.production
+.env.development
+.env.test
 coverage/
 *.cache
 .next/
