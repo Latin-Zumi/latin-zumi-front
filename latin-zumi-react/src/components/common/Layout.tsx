@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import Header from "./Header";
+import Footer from "./Footer";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
@@ -12,6 +13,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="app-main">
         {children}
       </div>
+      <Footer />
     </div>
   );
 }
