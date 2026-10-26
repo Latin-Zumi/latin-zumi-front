@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+import { ApiConnectionError, postJson } from './apiClient';
+
 const STORAGE_KEY = 'latin-zumi:session';
 
 export interface LoginCredentials {
@@ -45,23 +46,32 @@ export function getSession(): Session | null {
   }
 }
 
-export async function login(credentials: LoginCredentials): Promise<Session> {
+interface AuthFailureMessages {
+  status: number;
+  statusMessage: string;
+  fallbackMessage: string;
+}
+
+async function postSession(
+  path: string,
+  body: LoginCredentials | RegisterData,
+  messages: AuthFailureMessages,
+): Promise<Session> {
   let response: Response;
   try {
-    response = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
-    });
-  } catch {
-    throw new AuthError('No pudimos conectar con el servidor. Probá de nuevo.');
+    response = await postJson(path, body);
+  } catch (error) {
+    if (error instanceof ApiConnectionError) {
+      throw new AuthError('No pudimos conectar con el servidor. Probá de nuevo.');
+    }
+    throw error;
   }
 
   if (!response.ok) {
     throw new AuthError(
-      response.status === 401
-        ? 'Email o contraseña incorrectos.'
-        : 'No pudimos iniciar sesión. Probá de nuevo.',
+      response.status === messages.status
+        ? messages.statusMessage
+        : messages.fallbackMessage,
     );
   }
 
@@ -71,30 +81,20 @@ export async function login(credentials: LoginCredentials): Promise<Session> {
   return session;
 }
 
-export async function register(data: RegisterData): Promise<Session> {
-  let response: Response;
-  try {
-    response = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-  } catch {
-    throw new AuthError('No pudimos conectar con el servidor. Probá de nuevo.');
-  }
+export function login(credentials: LoginCredentials): Promise<Session> {
+  return postSession('/auth/login', credentials, {
+    status: 401,
+    statusMessage: 'Email o contraseña incorrectos.',
+    fallbackMessage: 'No pudimos iniciar sesión. Probá de nuevo.',
+  });
+}
 
-  if (!response.ok) {
-    throw new AuthError(
-      response.status === 409
-        ? 'Ya existe una cuenta con ese email.'
-        : 'No pudimos crear la cuenta. Probá de nuevo.',
-    );
-  }
-
-  const body = (await response.json()) as Session;
-  const session: Session = { token: body.token, user: body.user };
-  saveSession(session);
-  return session;
+export function register(data: RegisterData): Promise<Session> {
+  return postSession('/auth/register', data, {
+    status: 409,
+    statusMessage: 'Ya existe una cuenta con ese email.',
+    fallbackMessage: 'No pudimos crear la cuenta. Probá de nuevo.',
+  });
 }
 
 export function logout() {
