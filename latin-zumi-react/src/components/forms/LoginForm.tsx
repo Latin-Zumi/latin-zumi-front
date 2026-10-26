@@ -3,8 +3,17 @@ import { z } from 'zod';
 import { AuthError, login, type Session } from '../../services/authService';
 
 const loginSchema = z.object({
-  email: z.string().email('Ingresá un email válido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  email: z
+    .string()
+    .min(1, 'El email es obligatorio')
+    .refine((value) => value.trim().length > 0, 'El email es obligatorio')
+    .email('Ingresá un email válido'),
+  password: z
+    .string()
+    .refine(
+      (value) => value.trim().length > 0,
+      'La contraseña es obligatoria',
+    ),
 });
 
 type FieldErrors = Partial<Record<'email' | 'password', string>>;
@@ -19,8 +28,25 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleChange = (field: keyof FieldErrors, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setFormError('');
+
+    const result = loginSchema.shape[field].safeParse(value);
+    setFieldErrors((current) => {
+      const next = { ...current };
+      if (result.success) {
+        delete next[field];
+      } else {
+        next[field] = result.error.issues[0].message;
+      }
+      return next;
+    });
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setFormError('');
 
     const result = loginSchema.safeParse(form);
@@ -58,10 +84,17 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           id="email"
           type="email"
           autoComplete="email"
+          required
+          aria-invalid={Boolean(fieldErrors.email)}
+          aria-describedby={fieldErrors.email ? 'email-error' : undefined}
           value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          onChange={(e) => handleChange('email', e.target.value)}
         />
-        {fieldErrors.email && <p role="alert">{fieldErrors.email}</p>}
+        {fieldErrors.email && (
+          <p id="email-error" role="alert">
+            {fieldErrors.email}
+          </p>
+        )}
       </div>
 
       <div>
@@ -70,10 +103,19 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           id="password"
           type="password"
           autoComplete="current-password"
+          required
+          aria-invalid={Boolean(fieldErrors.password)}
+          aria-describedby={
+            fieldErrors.password ? 'password-error' : undefined
+          }
           value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          onChange={(e) => handleChange('password', e.target.value)}
         />
-        {fieldErrors.password && <p role="alert">{fieldErrors.password}</p>}
+        {fieldErrors.password && (
+          <p id="password-error" role="alert">
+            {fieldErrors.password}
+          </p>
+        )}
       </div>
 
       {formError && <p role="alert">{formError}</p>}
