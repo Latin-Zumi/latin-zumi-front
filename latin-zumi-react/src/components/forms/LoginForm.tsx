@@ -5,8 +5,17 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 
 const loginSchema = z.object({
-  email: z.string().email('Ingresá un email válido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Ingresá tu email')
+    .max(254, 'El email es demasiado largo')
+    .email('Ingresá un email válido'),
+  password: z
+    .string()
+    .min(1, 'Ingresá tu contraseña')
+    .min(6, 'Mínimo 6 caracteres')
+    .max(72, 'Máximo 72 caracteres'),
 });
 
 type FieldErrors = Partial<Record<'email' | 'password', string>>;
