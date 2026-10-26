@@ -133,6 +133,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         <select
           id="pais"
           value={form.pais}
+          className={fieldErrors.pais ? 'input-field--error' : undefined}
           disabled={loading}
           aria-invalid={!!fieldErrors.pais}
           aria-describedby={fieldErrors.pais ? 'pais-error' : undefined}
