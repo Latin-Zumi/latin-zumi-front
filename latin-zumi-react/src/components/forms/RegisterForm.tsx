@@ -5,10 +5,33 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 
 const registerSchema = z.object({
-  nombre: z.string().min(2, 'Ingresá tu nombre'),
-  email: z.string().email('Ingresá un email válido'),
-  pais: z.string().min(1, 'Elegí un país'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  nombre: z
+    .string()
+    .trim()
+    .min(2, 'Ingresá tu nombre')
+    .max(50, 'El nombre no puede superar los 50 caracteres')
+    .regex(
+      /^[\p{L}\p{M}]+(?:[ '\u2019\u002D\u00B7.][\p{L}\p{M}]+)*$/u,
+      'Ingresá un nombre válido, sin números',
+    ),
+  email: z
+    .string()
+    .min(1, 'Ingresá tu email')
+    .refine((value) => !/\s/u.test(value), 'El email no puede contener espacios')
+    .email('Ingresá un email válido'),
+  pais: z
+    .string()
+    .refine(
+      (value) => ['Argentina', 'Colombia', 'Otro'].includes(value),
+      'Elegí un país válido',
+    ),
+  password: z
+    .string()
+    .min(6, 'Mínimo 6 caracteres')
+    .refine(
+      (value) => value.trim().length > 0,
+      'La contraseña no puede contener solo espacios',
+    ),
 });
 
 type FieldErrors = Partial<
@@ -29,6 +52,25 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const updateField = (field: keyof FieldErrors, value: string) => {
+    setForm((currentForm) => ({ ...currentForm, [field]: value }));
+    setFieldErrors((currentErrors) => {
+      if (!currentErrors[field]) return currentErrors;
+
+      const result = registerSchema.shape[field].safeParse(value);
+      if (result.success) {
+        const nextErrors = { ...currentErrors };
+        delete nextErrors[field];
+        return nextErrors;
+      }
+
+      return {
+        ...currentErrors,
+        [field]: result.error.issues[0]?.message,
+      };
+    });
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -70,7 +112,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         value={form.nombre}
         disabled={loading}
         error={fieldErrors.nombre}
-        onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+        onChange={(e) => updateField('nombre', e.target.value)}
       />
 
       <Input
@@ -81,7 +123,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         value={form.email}
         disabled={loading}
         error={fieldErrors.email}
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
+        onChange={(e) => updateField('email', e.target.value)}
       />
 
       <div className="input-container">
@@ -94,7 +136,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
           disabled={loading}
           aria-invalid={!!fieldErrors.pais}
           aria-describedby={fieldErrors.pais ? 'pais-error' : undefined}
-          onChange={(e) => setForm({ ...form, pais: e.target.value })}
+          onChange={(e) => updateField('pais', e.target.value)}
         >
           <option value="">Elegí un país</option>
           <option value="Argentina">Argentina</option>
@@ -116,7 +158,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         value={form.password}
         disabled={loading}
         error={fieldErrors.password}
-        onChange={(e) => setForm({ ...form, password: e.target.value })}
+        onChange={(e) => updateField('password', e.target.value)}
       />
 
       {formError && (
