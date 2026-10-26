@@ -1,6 +1,7 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import LoginForm from '../components/forms/LoginForm';
 import { useAuth } from '../hooks/useAuth';
+import './Register.css';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -9,17 +10,25 @@ export default function Login() {
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   return (
-    <main>
-      <h1>Ingresar a Latin Zumi</h1>
-      <LoginForm
-        onSuccess={(session) => {
-          startSession(session);
-          navigate('/dashboard');
-        }}
-      />
-      <p>
-        ¿No tenés cuenta? <Link to="/register">Crear cuenta</Link>
-      </p>
+    <main className="register-page">
+      <section className="register-card" aria-labelledby="login-title">
+        <header className="register-card__header">
+          <span className="register-card__eyebrow">LATIN ZUMI · BIENVENIDO</span>
+          <h1 id="login-title">Ingresá a tu cuenta</h1>
+          <p>Entrá para ver tus balances y movimientos.</p>
+        </header>
+
+        <LoginForm
+          onSuccess={(session) => {
+            startSession(session);
+            navigate('/dashboard');
+          }}
+        />
+
+        <p className="register-card__login">
+          ¿No tenés cuenta? <Link to="/register">Crear cuenta</Link>
+        </p>
+      </section>
     </main>
   );
 }
