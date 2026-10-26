@@ -1,0 +1,59 @@
+@layer components {
+  .rate-chart {
+    @apply relative w-full;
+
+    & svg {
+      @apply block touch-none outline-none;
+    }
+
+    & svg:focus-visible {
+      @apply rounded-sm ring-2 ring-primary/40;
+    }
+  }
+
+  .rate-chart__grid {
+    stroke: var(--color-chart-grid);
+    stroke-width: 1;
+  }
+
+  .rate-chart__tick {
+    fill: var(--color-muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rate-chart__line {
+    fill: none;
+    stroke: var(--color-primary);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .rate-chart__area {
+    fill: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+
+  .rate-chart__crosshair {
+    stroke: var(--color-chart-crosshair);
+    stroke-width: 1;
+  }
+
+  .rate-chart__dot {
+    fill: var(--color-primary);
+    stroke: var(--color-surface);
+    stroke-width: 2;
+  }
+
+  .rate-chart__tooltip {
+    @apply pointer-events-none absolute top-0 flex -translate-x-1/2 flex-col items-center rounded-sm bg-ink px-3 py-1.5 text-xs text-white shadow-lg;
+
+    & strong {
+      @apply text-sm;
+    }
+  }
+
+  .rate-chart__tooltip-date {
+    @apply text-white/70;
+  }
+}

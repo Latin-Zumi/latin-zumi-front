@@ -1,0 +1,13 @@
+@layer components {
+  .state-container {
+    @apply flex flex-col items-center gap-3 p-6 text-center;
+  }
+
+  .loading-state {
+    @apply flex flex-col items-center gap-2 p-6 text-muted;
+  }
+
+  .loading-state--inline {
+    @apply flex-row p-0;
+  }
+}

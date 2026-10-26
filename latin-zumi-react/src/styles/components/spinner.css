@@ -1,0 +1,17 @@
+@layer components {
+  .ui-spinner {
+    @apply inline-block rounded-full border-2 border-current border-t-transparent animate-spin;
+  }
+
+  .ui-spinner--sm {
+    @apply w-4 h-4;
+  }
+
+  .ui-spinner--md {
+    @apply w-6 h-6;
+  }
+
+  .ui-spinner--lg {
+    @apply w-10 h-10;
+  }
+}
