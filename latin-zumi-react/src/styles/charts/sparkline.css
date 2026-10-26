@@ -1,0 +1,33 @@
+@layer components {
+  .sparkline {
+    @apply shrink-0 overflow-visible;
+  }
+
+  .sparkline__line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .sparkline__area {
+    stroke: none;
+  }
+
+  .sparkline__dot {
+    stroke: var(--color-surface);
+    stroke-width: 2;
+  }
+
+  .sparkline--up {
+    & .sparkline__line { stroke: var(--color-success); }
+    & .sparkline__area { fill: color-mix(in srgb, var(--color-success) 10%, transparent); }
+    & .sparkline__dot { fill: var(--color-success); }
+  }
+
+  .sparkline--down {
+    & .sparkline__line { stroke: var(--color-danger); }
+    & .sparkline__area { fill: color-mix(in srgb, var(--color-danger) 10%, transparent); }
+    & .sparkline__dot { fill: var(--color-danger); }
+  }
+}

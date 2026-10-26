@@ -1,0 +1,25 @@
+@layer components {
+  .site-footer {
+    @apply mt-12 bg-ink text-white/70;
+  }
+
+  .site-footer__inner {
+    @apply mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-6 text-sm sm:flex-row;
+  }
+
+  .footer-nav {
+    @apply flex flex-wrap justify-center gap-x-6 gap-y-2;
+
+    & a {
+      @apply text-white/80 no-underline;
+
+      &:hover {
+        @apply text-white underline;
+      }
+    }
+  }
+
+  .footer-credits {
+    @apply text-white/60;
+  }
+}
