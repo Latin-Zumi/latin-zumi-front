@@ -1,8 +1,8 @@
 import { mockBalances } from '../mocks/balances';
 import { getSession } from './authService';
+import { ApiConnectionError, apiRequest } from './apiClient';
 import type { Balance } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 export class WalletError extends Error {}
@@ -23,11 +23,14 @@ export async function getBalances(): Promise<Balance[]> {
 
   let response: Response;
   try {
-    response = await fetch(`${API_URL}/wallet/balances`, {
+    response = await apiRequest('/wallet/balances', {
       headers: { Authorization: `Bearer ${session.token}` },
     });
-  } catch {
-    throw new WalletError('No pudimos conectar con el servidor. Probá de nuevo.');
+  } catch (error) {
+    if (error instanceof ApiConnectionError) {
+      throw new WalletError('No pudimos conectar con el servidor. Probá de nuevo.');
+    }
+    throw error;
   }
 
   if (!response.ok) {
