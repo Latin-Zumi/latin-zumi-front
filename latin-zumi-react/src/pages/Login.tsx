@@ -1,7 +1,6 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import LoginForm from '../components/forms/LoginForm';
 import { useAuth } from '../hooks/useAuth';
-import './Register.css';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -10,10 +9,10 @@ export default function Login() {
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   return (
-    <main className="register-page">
-      <section className="register-card" aria-labelledby="login-title">
-        <header className="register-card__header">
-          <span className="register-card__eyebrow">LATIN ZUMI · BIENVENIDO</span>
+    <main className="auth-page">
+      <section className="auth-card" aria-labelledby="login-title">
+        <header className="auth-card__header">
+          <span className="auth-card__eyebrow">LATIN ZUMI · BIENVENIDO</span>
           <h1 id="login-title">Ingresá a tu cuenta</h1>
           <p>Entrá para ver tus balances y movimientos.</p>
         </header>
@@ -25,7 +24,7 @@ export default function Login() {
           }}
         />
 
-        <p className="register-card__login">
+        <p className="auth-card__footer">
           ¿No tenés cuenta? <Link to="/register">Crear cuenta</Link>
         </p>
       </section>

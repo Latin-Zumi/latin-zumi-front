@@ -1,21 +1,162 @@
+/* Login y Register */
 @layer components {
   .auth-page {
-    @apply flex justify-center py-6;
+    display: grid;
+    min-height: 100%;
+    place-items: center;
+    padding: 24px 12px;
+    background:
+      radial-gradient(ellipse at 8% 0%, color-mix(in srgb, var(--color-primary) 9%, transparent), transparent 40%),
+      radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--color-secondary) 8%, transparent), transparent 38%);
+    border-radius: 18px;
   }
 
   .auth-card {
-    @apply w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-sm sm:p-8;
+    width: min(100%, 490px);
+    box-sizing: border-box;
+    padding: clamp(24px, 5vw, 42px);
+    text-align: left;
+    background: var(--color-card);
+    border: 1px solid var(--color-card-border);
+    border-radius: 20px;
+    box-shadow: 0 20px 55px color-mix(in srgb, var(--color-foreground) 11%, transparent);
+  }
+
+  .auth-card__header {
+    margin-bottom: 28px;
+    text-align: center;
 
     & h1 {
-      @apply mb-6 text-2xl;
+      margin: 0 0 10px;
+      color: var(--color-foreground);
+      font-size: clamp(1.8rem, 5vw, 2.25rem);
+      font-weight: 750;
+      letter-spacing: -0.045em;
+      line-height: 1.15;
     }
 
-    & form .btn {
-      @apply w-full;
+    & p {
+      max-width: 330px;
+      margin: 0 auto;
+      color: var(--color-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+  }
+
+  .auth-card__eyebrow {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: var(--color-primary);
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.12em;
+  }
+
+  .auth-card form > .input-container {
+    gap: 7px;
+    margin-bottom: 18px;
+  }
+
+  .auth-card .input-label {
+    align-self: flex-start;
+    color: var(--color-label);
+    font-size: 0.88rem;
+    font-weight: 650;
+  }
+
+  .auth-card .input-field,
+  .auth-card select {
+    width: 100%;
+    min-height: 48px;
+    box-sizing: border-box;
+    padding: 11px 14px;
+    color: var(--color-foreground);
+    background-color: var(--color-field);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    font: inherit;
+    text-align: left;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+
+    &:focus {
+      background-color: var(--color-surface);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
+    }
+  }
+
+  .auth-card .input-field::placeholder {
+    color: var(--color-placeholder);
+  }
+
+  .auth-card .input-field--error {
+    border-color: var(--color-danger);
+  }
+
+  .auth-card .input-error,
+  .auth-card .form-error {
+    margin-top: 2px;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  .auth-card .form-error {
+    margin: 0 0 16px;
+  }
+
+  .auth-card form > .btn {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 2px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 650;
+    box-shadow: 0 7px 16px color-mix(in srgb, var(--color-primary) 20%, transparent);
+    transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 10px 20px color-mix(in srgb, var(--color-primary) 26%, transparent);
+      transform: translateY(-1px);
+    }
+  }
+
+  .auth-card__footer {
+    margin: 22px 0 0;
+    padding-top: 19px;
+    color: var(--color-muted);
+    border-top: 1px solid var(--color-divider);
+    font-size: 0.9rem;
+    text-align: center;
+
+    & a {
+      color: var(--color-primary);
+      font-weight: 650;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .auth-page {
+      padding: 8px 0;
+      background: transparent;
     }
 
-    & > p {
-      @apply mt-4 text-center text-sm text-muted;
+    .auth-card {
+      padding: 26px 20px;
+      border-radius: 16px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .auth-card .input-field,
+    .auth-card select,
+    .auth-card form > .btn {
+      transition: none;
     }
   }
 }
