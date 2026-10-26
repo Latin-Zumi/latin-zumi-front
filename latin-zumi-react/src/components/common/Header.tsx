@@ -12,8 +12,16 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        <Link to="/" className="site-brand" title="Latin Zumi Inicio">
-          Latin Zumi
+        <Link
+          to="/"
+          className="site-brand"
+          aria-label="Latin Zumi, inicio"
+        >
+          <img
+            src="/LatinZumiLogo.png"
+            alt=""
+            className="site-brand__logo"
+          />
         </Link>
 
         <nav className="site-nav" aria-label="Navegación principal">

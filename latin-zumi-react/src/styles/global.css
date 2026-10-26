@@ -159,11 +159,21 @@
   }
 
   .site-brand {
-    @apply text-xl font-bold no-underline text-foreground;
+    @apply inline-flex shrink-0 items-center no-underline text-foreground;
 
     &:hover {
       @apply text-foreground;
     }
+  }
+
+  .site-brand__logo {
+    @apply block;
+    width: 220px;
+    height: 56px;
+    max-width: none;
+    object-fit: cover;
+    object-position: center 48%;
+    border-radius: 0;
   }
 
   .site-nav {
@@ -185,5 +195,12 @@
 
   .account-identity__name {
     @apply text-sm text-muted;
+  }
+
+  @media (max-width: 640px) {
+    .site-brand__logo {
+      width: 170px;
+      height: 44px;
+    }
   }
 }
