@@ -1,0 +1,34 @@
+@layer components {
+  .site-header {
+    @apply sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur;
+  }
+
+  .site-header__inner {
+    @apply mx-auto flex max-w-6xl items-center gap-4 px-4 py-2;
+  }
+
+  .site-brand {
+    @apply inline-flex shrink-0 items-center no-underline text-foreground;
+
+    &:hover {
+      @apply text-foreground;
+    }
+  }
+
+  .site-brand__logo {
+    @apply block;
+    width: 220px;
+    height: 56px;
+    max-width: none;
+    object-fit: cover;
+    object-position: center 48%;
+    border-radius: 0;
+  }
+
+  @media (max-width: 640px) {
+    .site-brand__logo {
+      width: 170px;
+      height: 44px;
+    }
+  }
+}

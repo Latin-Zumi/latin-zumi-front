@@ -1,0 +1,50 @@
+@layer components {
+  .rate-card {
+    @apply flex flex-col items-start gap-3 rounded-lg border border-border bg-card p-5 text-left shadow-sm cursor-pointer transition;
+
+    &:hover {
+      @apply -translate-y-0.5 border-primary/40;
+    }
+
+    &.is-selected {
+      @apply border-primary ring-2 ring-primary/20;
+    }
+  }
+
+  .rate-card__head {
+    @apply flex items-center gap-2;
+  }
+
+  .currency-badge {
+    @apply rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary;
+  }
+
+  .rate-card__name {
+    @apply text-sm text-muted;
+  }
+
+  .rate-card__body {
+    @apply flex w-full items-end justify-between gap-3;
+  }
+
+  .rate-card__value {
+    @apply text-2xl font-bold text-foreground;
+  }
+
+  .rate-card__pair {
+    @apply text-xs text-muted;
+  }
+
+  .trend-pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .trend-pill--up {
+    @apply bg-success/10 text-success;
+  }
+
+  .trend-pill--down {
+    @apply bg-danger/10 text-danger;
+  }
+}

@@ -1,0 +1,25 @@
+@layer components {
+  .dialog-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4;
+  }
+
+  .dialog-panel {
+    @apply w-full max-w-md rounded-lg bg-surface p-6 shadow-lg;
+  }
+
+  .dialog-header {
+    @apply mb-4 flex items-center justify-between gap-4;
+  }
+
+  .dialog-close {
+    @apply ml-auto bg-transparent px-2 py-0 text-2xl leading-none text-muted cursor-pointer;
+  }
+
+  .dialog-body {
+    @apply mb-6;
+  }
+
+  .dialog-footer {
+    @apply flex justify-end gap-2;
+  }
+}

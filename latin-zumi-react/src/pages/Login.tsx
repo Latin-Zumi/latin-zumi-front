@@ -9,17 +9,19 @@ export default function Login() {
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   return (
-    <main>
-      <h1>Ingresar a Latin Zumi</h1>
-      <LoginForm
-        onSuccess={(session) => {
-          startSession(session);
-          navigate('/dashboard');
-        }}
-      />
-      <p>
-        ¿No tenés cuenta? <Link to="/register">Crear cuenta</Link>
-      </p>
+    <main className="auth-page">
+      <div className="auth-card">
+        <h1>Ingresar a Latin Zumi</h1>
+        <LoginForm
+          onSuccess={(session) => {
+            startSession(session);
+            navigate('/dashboard');
+          }}
+        />
+        <p>
+          ¿No tenés cuenta? <Link to="/register">Crear cuenta</Link>
+        </p>
+      </div>
     </main>
   );
 }

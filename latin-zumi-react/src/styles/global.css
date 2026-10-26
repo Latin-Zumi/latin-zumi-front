@@ -1,206 +1,33 @@
-@import "tailwindcss";
-@config "../../tailwind.config.js";
+/* Variables globales de Latin Zumi: Tailwind genera las utilidades (bg-primary, rounded-md…)
+   y además quedan disponibles como var(--color-primary) en cualquier CSS. */
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-@layer base {
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-  }
+  --color-ink: #0b1b3f;
+  --color-background: #f3f6fb;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-foreground: #172238;
+  --color-muted: #637089;
+  --color-border: #d5dce8;
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold text-foreground;
-  }
+  --color-primary: #2459c4;
+  --color-primary-hover: #17449f;
+  --color-primary-foreground: #ffffff;
 
-  a {
-    @apply text-primary underline;
+  --color-secondary: #ef7a38;
+  --color-info: #2879c7;
+  --color-success: #17835d;
+  --color-warning: #b66b12;
+  --color-danger: #c43c39;
 
-    &:hover {
-      @apply text-primary-hover;
-    }
-  }
+  --color-chart-grid: #e4e9f2;
+  --color-chart-crosshair: #94a3b8;
 
-  ul, ol {
-    @apply list-disc list-inside text-foreground;
-  }
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
 
-  button {
-    @apply rounded-md px-4 py-2 font-medium transition-colors;
-  }
-
-  input, select, textarea {
-    @apply border border-border rounded-sm px-3 py-2;
-
-    &:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px #2459c4;
-    }
-  }
-
-  img {
-    @apply max-w-full h-auto rounded-md;
-  }
-}
-
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground cursor-pointer;
-
-    &:is(a) {
-      @apply rounded-md px-4 py-2 font-medium no-underline text-primary-foreground;
-    }
-
-    &:hover:not(:disabled) {
-      @apply bg-primary-hover;
-    }
-
-    &:disabled {
-      @apply opacity-60 cursor-not-allowed;
-    }
-  }
-
-  .btn-link {
-    @apply inline-flex items-center justify-center rounded-md font-medium no-underline;
-  }
-
-  .btn-sm {
-    @apply text-sm px-3 py-1;
-  }
-
-  .btn-md {
-    @apply text-base;
-  }
-
-  .btn-lg {
-    @apply text-lg px-6 py-3;
-  }
-
-  .ui-spinner {
-    @apply inline-block rounded-full border-2 border-current border-t-transparent animate-spin;
-  }
-
-  .ui-spinner--sm {
-    @apply w-4 h-4;
-  }
-
-  .ui-spinner--md {
-    @apply w-6 h-6;
-  }
-
-  .ui-spinner--lg {
-    @apply w-10 h-10;
-  }
-
-  .input-container {
-    @apply flex flex-col gap-1 mb-4;
-  }
-
-  .input-label {
-    @apply text-sm font-medium;
-  }
-
-  .input-field--error {
-    @apply border-danger;
-  }
-
-  .input-error,
-  .form-error {
-    @apply text-sm text-danger;
-  }
-
-  .state-container {
-    @apply flex flex-col items-center gap-3 p-6 text-center;
-  }
-
-  .loading-state {
-    @apply flex flex-col items-center gap-2 p-6 text-muted;
-  }
-
-  .loading-state--inline {
-    @apply flex-row p-0;
-  }
-
-  .dialog-backdrop {
-    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4;
-  }
-
-  .dialog-panel {
-    @apply w-full max-w-md rounded-lg bg-surface p-6 shadow-lg;
-  }
-
-  .dialog-header {
-    @apply mb-4 flex items-center justify-between gap-4;
-  }
-
-  .dialog-close {
-    @apply ml-auto bg-transparent px-2 py-0 text-2xl leading-none text-muted cursor-pointer;
-  }
-
-  .dialog-body {
-    @apply mb-6;
-  }
-
-  .dialog-footer {
-    @apply flex justify-end gap-2;
-  }
-
-  .app-layout {
-    @apply min-h-screen flex flex-col;
-  }
-
-  .app-main {
-    @apply flex-1 mx-auto w-full max-w-5xl p-4;
-  }
-
-  .site-header {
-    @apply bg-surface shadow-sm;
-  }
-
-  .site-header__inner {
-    @apply mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-4 py-3;
-  }
-
-  .site-brand {
-    @apply inline-flex shrink-0 items-center no-underline text-foreground;
-
-    &:hover {
-      @apply text-foreground;
-    }
-  }
-
-  .site-brand__logo {
-    @apply block;
-    width: 220px;
-    height: 56px;
-    max-width: none;
-    object-fit: cover;
-    object-position: center 48%;
-    border-radius: 0;
-  }
-
-  .site-nav {
-    @apply flex flex-1 flex-wrap items-center gap-4;
-  }
-
-  .site-nav__link {
-    @apply no-underline;
-
-    &.is-active {
-      @apply font-bold;
-    }
-  }
-
-  .site-actions,
-  .account-actions {
-    @apply flex items-center gap-3;
-  }
-
-  .account-identity__name {
-    @apply text-sm text-muted;
-  }
-
-  @media (max-width: 640px) {
-    .site-brand__logo {
-      width: 170px;
-      height: 44px;
-    }
-  }
+  --shadow-sm: 0 5px 18px rgba(23, 34, 56, 0.08);
+  --shadow-lg: 0 24px 70px rgba(8, 20, 42, 0.25);
 }

@@ -9,17 +9,19 @@ export default function Register() {
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   return (
-    <main>
-      <h1>Crear cuenta en Latin Zumi</h1>
-      <RegisterForm
-        onSuccess={(session) => {
-          startSession(session);
-          navigate('/dashboard');
-        }}
-      />
-      <p>
-        ¿Ya tenés cuenta? <Link to="/login">Ingresar</Link>
-      </p>
+    <main className="auth-page">
+      <div className="auth-card">
+        <h1>Crear cuenta en Latin Zumi</h1>
+        <RegisterForm
+          onSuccess={(session) => {
+            startSession(session);
+            navigate('/dashboard');
+          }}
+        />
+        <p>
+          ¿Ya tenés cuenta? <Link to="/login">Ingresar</Link>
+        </p>
+      </div>
     </main>
   );
 }

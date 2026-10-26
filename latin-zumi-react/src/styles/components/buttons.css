@@ -1,0 +1,57 @@
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-primary font-semibold text-primary-foreground cursor-pointer;
+
+    &:is(a) {
+      @apply px-4 py-2 no-underline text-primary-foreground;
+    }
+
+    &:is(a):hover {
+      @apply text-primary-foreground;
+    }
+
+    &:hover:not(:disabled) {
+      @apply bg-primary-hover;
+    }
+
+    &:disabled {
+      @apply opacity-60 cursor-not-allowed;
+    }
+  }
+
+  .btn-link {
+    @apply inline-flex items-center justify-center rounded-md font-medium no-underline;
+  }
+
+  .btn-sm {
+    @apply text-sm px-3 py-1;
+  }
+
+  .btn-md {
+    @apply text-base;
+  }
+
+  .btn-lg {
+    @apply text-base px-6 py-3;
+  }
+
+  .btn-light {
+    @apply bg-white text-primary shadow-sm;
+
+    &:is(a), &:is(a):hover {
+      @apply text-primary;
+    }
+
+    &:hover:not(:disabled) {
+      @apply bg-primary-foreground/90;
+    }
+  }
+
+  .btn-ghost {
+    @apply bg-white/10 ring-1 ring-white/40;
+
+    &:hover:not(:disabled) {
+      @apply bg-white/20;
+    }
+  }
+}
