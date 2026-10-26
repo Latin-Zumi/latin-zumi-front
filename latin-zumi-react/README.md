@@ -1,5 +1,22 @@
 # React + TypeScript + Vite
 
+## Configuración de la API
+
+Copiá `.env.example` a `.env.local` y configurá `VITE_API_URL` con la URL base
+del backend. El frontend la usa para las solicitudes de autenticación y billetera.
+Si no se define, se usa `http://localhost:3000`.
+
+El frontend envía `email` y `password` a `POST /auth/login`; el registro envía
+`nombre`, `email`, `pais` y `password` a `POST /auth/register`. Ambos esperan
+una respuesta con `token` y `user` con el formato definido en
+`src/services/authService.ts`. El login interpreta `401` como credenciales
+incorrectas y el registro `409` como email ya existente.
+
+Estas solicitudes requieren el backend; no hay autenticación simulada.
+`VITE_USE_MOCK` solo activa los balances de ejemplo y no afecta login ni
+registro. La sesión se conserva en `localStorage`; cerrar sesión solo la borra
+del frontend, ya que todavía no existe una solicitud de revocación al backend.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

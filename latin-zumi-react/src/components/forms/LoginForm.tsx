@@ -1,19 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { AuthError, login, type Session } from '../../services/authService';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
 
 const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'El email es obligatorio')
-    .refine((value) => value.trim().length > 0, 'El email es obligatorio')
-    .email('Ingresá un email válido'),
-  password: z
-    .string()
-    .refine(
-      (value) => value.trim().length > 0,
-      'La contraseña es obligatoria',
-    ),
+  email: z.string().email('Ingresá un email válido'),
+  password: z.string().min(6, 'Mínimo 6 caracteres'),
 });
 
 type FieldErrors = Partial<Record<'email' | 'password', string>>;
@@ -28,25 +21,8 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (field: keyof FieldErrors, value: string) => {
-    setForm((current) => ({ ...current, [field]: value }));
-    setFormError('');
-
-    const result = loginSchema.shape[field].safeParse(value);
-    setFieldErrors((current) => {
-      const next = { ...current };
-      if (result.success) {
-        delete next[field];
-      } else {
-        next[field] = result.error.issues[0].message;
-      }
-      return next;
-    });
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (loading) return;
     setFormError('');
 
     const result = loginSchema.safeParse(form);
@@ -78,51 +54,37 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div>
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          required
-          aria-invalid={Boolean(fieldErrors.email)}
-          aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-          value={form.email}
-          onChange={(e) => handleChange('email', e.target.value)}
-        />
-        {fieldErrors.email && (
-          <p id="email-error" role="alert">
-            {fieldErrors.email}
-          </p>
-        )}
-      </div>
+      <Input
+        id="email"
+        label="Email"
+        type="email"
+        autoComplete="email"
+        value={form.email}
+        disabled={loading}
+        error={fieldErrors.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })}
+      />
 
-      <div>
-        <label htmlFor="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          aria-invalid={Boolean(fieldErrors.password)}
-          aria-describedby={
-            fieldErrors.password ? 'password-error' : undefined
-          }
-          value={form.password}
-          onChange={(e) => handleChange('password', e.target.value)}
-        />
-        {fieldErrors.password && (
-          <p id="password-error" role="alert">
-            {fieldErrors.password}
-          </p>
-        )}
-      </div>
+      <Input
+        id="password"
+        label="Contraseña"
+        type="password"
+        autoComplete="current-password"
+        value={form.password}
+        disabled={loading}
+        error={fieldErrors.password}
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+      />
 
-      {formError && <p role="alert">{formError}</p>}
+      {formError && (
+        <p role="alert" className="form-error">
+          {formError}
+        </p>
+      )}
 
-      <button type="submit" disabled={loading}>
-        {loading ? 'Ingresando...' : 'Ingresar'}
-      </button>
+      <Button variant="solid" type="submit" loading={loading}>
+        Ingresar
+      </Button>
     </form>
   );
 }
