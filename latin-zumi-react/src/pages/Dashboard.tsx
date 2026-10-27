@@ -1,43 +1,58 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import ActivityChart from '../components/ActivityChart';
-import { EmptyState, ErrorState } from '../components/states';
+import { EmptyState, ErrorState, LoadingState } from '../components/states';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import BalanceCard from '../components/wallet/BalanceCard';
 import BalanceTable from '../components/wallet/BalanceTable';
 import { useAuth } from '../hooks/useAuth';
-import { mockWallet } from '../mocks/balances';
+import { useWallet } from '../hooks/useWallet';
+import {
+  TransactionError,
+  lookupUser,
+  type TransferData,
+} from '../services/transactionService';
 import {
   calculateActivityByDay,
-  calculateBalances,
   calculateSpentToday,
-  convertAmount,
+  calculateTotalBalance,
   getCurrentRates,
   getRecentTransactions,
+  isIncome,
 } from '../utils/dashboard';
-import { CURRENCY_NAMES, formatMoney } from '../utils/money';
-import type { Currency, WalletTransaction } from '../types';
+import {
+  CURRENCY_NAMES,
+  formatMoney,
+  fromCents,
+  parseAmountInput,
+  toCents,
+} from '../utils/money';
+import type { Currency, Transaction } from '../types';
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 const CURRENCIES: Currency[] = ['ARS', 'COP', 'USD', 'EUR'];
 
 const transferSchema = z.object({
   currency: z.enum(CURRENCIES),
-  amount: z.string()
+  amount: z
+    .string()
     .trim()
     .min(1, 'Ingresá un monto.')
-    .refine((value) => {
-      const amount = Number(value);
-      return Number.isFinite(amount) && amount > 0;
-    }, 'El monto debe ser mayor a cero.')
-    .refine((value) => {
-      const amount = Number(value);
-      return Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001;
-    }, 'Usá hasta dos decimales.'),
-  recipient: z.string().trim().min(2, 'Ingresá un destinatario.'),
+    .refine((value) => parseAmountInput(value) !== null, 'Ingresá un monto mayor a cero, con hasta dos decimales.'),
+  recipient_email: z
+    .string()
+    .trim()
+    .min(1, 'Ingresá el email del destinatario.')
+    .email('Ingresá un email válido.'),
 });
+
+// Datos validados que esperan confirmación. La clave se reutiliza si hay que reintentar.
+interface PendingTransfer {
+  data: TransferData;
+  recipientName: string;
+  idempotencyKey: string;
+}
 
 function isCurrency(value: string): value is Currency {
   return CURRENCIES.some((currency) => currency === value);
@@ -50,14 +65,22 @@ function formatTransactionDate(value: string): string {
   }).format(new Date(value));
 }
 
+const TYPE_LABELS: Record<Transaction['type'], string> = {
+  deposit: 'Depósito',
+  transfer_sent: 'Transferencia enviada',
+  transfer_received: 'Transferencia recibida',
+  exchange: 'Cambio de moneda',
+};
+
 export default function Dashboard() {
-  const { user: authenticatedUser } = useAuth();
-  const [transactions, setTransactions] = useState<WalletTransaction[]>(
-    () => mockWallet.transactions,
-  );
+  const { user } = useAuth();
+  const wallet = useWallet();
   const [transferOpen, setTransferOpen] = useState(false);
+  const [pending, setPending] = useState<PendingTransfer | null>(null);
   const [formError, setFormError] = useState('');
-  const user = USE_MOCK ? mockWallet.user : authenticatedUser;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // El estado tarda un render en deshabilitar el botón; el ref frena el doble clic al instante
+  const submittingRef = useRef(false);
 
   if (!user) {
     return <ErrorState message="No pudimos cargar los datos de tu usuario." />;
@@ -67,19 +90,26 @@ export default function Dashboard() {
     return <ErrorState message="Tu moneda preferida no es válida." />;
   }
 
+  if (wallet.isLoading) {
+    return (
+      <main className="dashboard">
+        <LoadingState message="Cargando tu billetera..." />
+      </main>
+    );
+  }
+
+  if (wallet.error) {
+    return (
+      <main className="dashboard">
+        <ErrorState message={wallet.error} onRetry={() => void wallet.reload()} />
+      </main>
+    );
+  }
+
+  const { balances, transactions } = wallet;
   const preferredCurrency = user.moneda_preferida;
   const rates = getCurrentRates();
-  const balances = calculateBalances(mockWallet.openingBalances, transactions);
-  const totalBalance = balances.reduce(
-    (total, balance) =>
-      total + convertAmount(
-        Number(balance.amount),
-        balance.currency,
-        preferredCurrency,
-        rates,
-      ),
-    0,
-  );
+  const totalBalance = calculateTotalBalance(balances, preferredCurrency, rates);
   const spentToday = calculateSpentToday(
     transactions,
     preferredCurrency,
@@ -96,17 +126,22 @@ export default function Dashboard() {
   const recentTransactions = getRecentTransactions(transactions, 5);
 
   function closeTransfer() {
+    if (isSubmitting) return;
     setTransferOpen(false);
+    setPending(null);
     setFormError('');
   }
 
-  function submitTransfer(event: FormEvent<HTMLFormElement>) {
+  async function reviewTransfer(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submittingRef.current) return;
+    setFormError('');
+
     const formData = new FormData(event.currentTarget);
     const result = transferSchema.safeParse({
       currency: formData.get('currency'),
       amount: formData.get('amount'),
-      recipient: formData.get('recipient'),
+      recipient_email: formData.get('recipient_email'),
     });
 
     if (!result.success) {
@@ -114,26 +149,63 @@ export default function Dashboard() {
       return;
     }
 
-    const amount = Number(result.data.amount);
-    const balance = balances.find(
-      (item) => item.currency === result.data.currency,
-    );
-    if (!balance || amount > Number(balance.amount)) {
+    const cents = parseAmountInput(result.data.amount) ?? 0;
+    const balance = balances.find((item) => item.currency === result.data.currency);
+    if (!balance || cents > toCents(balance.amount)) {
       setFormError('No tenés saldo suficiente en esa moneda.');
       return;
     }
 
-    const transaction: WalletTransaction = {
-      id: `transfer-${transactions.length + 1}`,
-      type: 'transfer',
-      currency: result.data.currency,
-      amount: amount.toFixed(2),
-      occurredAt: new Date().toISOString(),
-      description: 'Transferencia enviada',
-      recipient: result.data.recipient,
-    };
-    setTransactions((current) => [transaction, ...current]);
-    closeTransfer();
+    const recipientEmail = result.data.recipient_email.toLowerCase();
+    if (recipientEmail === user?.email.toLowerCase()) {
+      setFormError('No podés transferirte a vos mismo.');
+      return;
+    }
+
+    submittingRef.current = true;
+    setIsSubmitting(true);
+    try {
+      const recipient = await lookupUser(recipientEmail);
+      setPending({
+        data: {
+          recipient_email: recipientEmail,
+          currency: result.data.currency,
+          amount: fromCents(cents),
+        },
+        recipientName: recipient.nombre,
+        idempotencyKey: crypto.randomUUID(),
+      });
+    } catch (error) {
+      setFormError(
+        error instanceof TransactionError
+          ? error.message
+          : 'Ocurrió un error inesperado. Probá de nuevo.',
+      );
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  }
+
+  async function confirmTransfer() {
+    if (!pending || submittingRef.current) return;
+    setFormError('');
+    submittingRef.current = true;
+    setIsSubmitting(true);
+    try {
+      await wallet.transfer(pending.data, pending.idempotencyKey);
+      setTransferOpen(false);
+      setPending(null);
+    } catch (error) {
+      setFormError(
+        error instanceof TransactionError
+          ? error.message
+          : 'Ocurrió un error inesperado. Probá de nuevo.',
+      );
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -143,7 +215,7 @@ export default function Dashboard() {
           <p className="home-hero__eyebrow">Resumen de tu billetera</p>
           <h1 id="dashboard-title">¡Hola, {user.nombre}!</h1>
           <p className="home-hero__lead">
-            Saldo total en {CURRENCY_NAMES[preferredCurrency]}
+            Saldo total estimado en {CURRENCY_NAMES[preferredCurrency]}
           </p>
           <p className="dashboard-hero__balance">
             {formatMoney(totalBalance, preferredCurrency)}
@@ -185,7 +257,7 @@ export default function Dashboard() {
               <h2 id="activity-title">Actividad de tu dinero</h2>
             </div>
             <div className="dashboard__spent">
-              <span>Gastado hoy</span>
+              <span>Enviado hoy</span>
               <strong>{formatMoney(spentToday, preferredCurrency)}</strong>
             </div>
           </header>
@@ -216,38 +288,33 @@ export default function Dashboard() {
             {recentTransactions.length === 0 ? (
               <EmptyState
                 title="Todavía no hay movimientos"
-                description="Tus ingresos y gastos aparecerán acá."
+                description="Tus depósitos y transferencias aparecerán acá."
                 variant="no-transactions"
               />
             ) : (
               <ul className="dashboard__movement-list">
                 {recentTransactions.map((transaction) => {
-                  const isIncome = transaction.type === 'income';
-                  const typeLabel = isIncome
-                    ? 'Ingreso'
-                    : transaction.type === 'transfer'
-                      ? 'Transferencia'
-                      : 'Gasto';
+                  const income = isIncome(transaction);
                   return (
                     <li className="dashboard__movement" key={transaction.id}>
                       <span
-                        className={`dashboard__movement-icon${isIncome ? ' dashboard__movement-icon--income' : ''}`}
+                        className={`dashboard__movement-icon${income ? ' dashboard__movement-icon--income' : ''}`}
                         aria-hidden="true"
                       >
-                        {isIncome ? '↓' : '↑'}
+                        {income ? '↓' : '↑'}
                       </span>
                       <span className="dashboard__movement-detail">
                         <strong>
-                          {transaction.recipient ?? transaction.description}
+                          {transaction.counterparty?.nombre ?? transaction.description}
                         </strong>
                         <span>
-                          {typeLabel} · {formatTransactionDate(transaction.occurredAt)}
+                          {TYPE_LABELS[transaction.type]} · {formatTransactionDate(transaction.created_at)}
                         </span>
                       </span>
                       <span
-                        className={`dashboard__movement-amount${isIncome ? ' dashboard__movement-amount--income' : ''}`}
+                        className={`dashboard__movement-amount${income ? ' dashboard__movement-amount--income' : ''}`}
                       >
-                        {isIncome ? '+' : '−'}
+                        {income ? '+' : '−'}
                         {formatMoney(transaction.amount, transaction.currency)}
                       </span>
                     </li>
@@ -262,61 +329,87 @@ export default function Dashboard() {
       <Modal
         isOpen={transferOpen}
         onClose={closeTransfer}
-        title="Nueva transferencia"
+        title={pending ? 'Confirmá la transferencia' : 'Nueva transferencia'}
         footer={
-          <>
-            <Button variant="solid" onClick={closeTransfer}>Cancelar</Button>
-            <Button
-              variant="solid"
-              type="submit"
-              form="dashboard-transfer-form"
-            >
-              Confirmar transferencia
-            </Button>
-          </>
+          pending ? (
+            <>
+              <Button variant="solid" onClick={() => setPending(null)} disabled={isSubmitting}>
+                Volver
+              </Button>
+              <Button variant="solid" onClick={() => void confirmTransfer()} loading={isSubmitting}>
+                Confirmar transferencia
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="solid" onClick={closeTransfer} disabled={isSubmitting}>
+                Cancelar
+              </Button>
+              <Button
+                variant="solid"
+                type="submit"
+                form="dashboard-transfer-form"
+                loading={isSubmitting}
+              >
+                Continuar
+              </Button>
+            </>
+          )
         }
       >
+        {/* El formulario queda montado (oculto) para no perder lo cargado al tocar "Volver" */}
+        {pending && (
+          <div className="dashboard__transfer-form">
+            <p>
+              Vas a transferir{' '}
+              <strong>{formatMoney(pending.data.amount, pending.data.currency)}</strong>{' '}
+              a <strong>{pending.recipientName}</strong> ({pending.data.recipient_email}).
+            </p>
+            {formError && <p className="form-error" role="alert">{formError}</p>}
+          </div>
+        )}
         <form
-          id="dashboard-transfer-form"
-          className="dashboard__transfer-form"
-          onSubmit={submitTransfer}
-          noValidate
-        >
-          <label className="dashboard__field-label" htmlFor="transfer-currency">
-            Moneda
-          </label>
-          <select
-            id="transfer-currency"
-            className="dashboard__select"
-            name="currency"
-            defaultValue="ARS"
-            required
+            id="dashboard-transfer-form"
+            className="dashboard__transfer-form"
+            hidden={pending !== null}
+            onSubmit={(event) => void reviewTransfer(event)}
+            noValidate
           >
-            {CURRENCIES.map((currency) => (
-              <option key={currency} value={currency}>
-                {currency} · {CURRENCY_NAMES[currency]}
-              </option>
-            ))}
-          </select>
-          <Input
-            label="Monto"
-            name="amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            placeholder="0,00"
-            required
-          />
-          <Input
-            label="Destinatario"
-            name="recipient"
-            type="text"
-            autoComplete="name"
-            placeholder="Nombre del destinatario"
-            required
-          />
-          {formError && <p className="form-error" role="alert">{formError}</p>}
-        </form>
+            <label className="dashboard__field-label" htmlFor="transfer-currency">
+              Moneda
+            </label>
+            <select
+              id="transfer-currency"
+              className="dashboard__select"
+              name="currency"
+              defaultValue={preferredCurrency}
+              required
+            >
+              {CURRENCIES.map((currency) => (
+                <option key={currency} value={currency}>
+                  {currency} · {CURRENCY_NAMES[currency]}
+                </option>
+              ))}
+            </select>
+            <Input
+              label="Monto"
+              name="amount"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              placeholder="0,00"
+              required
+            />
+            <Input
+              label="Email del destinatario"
+              name="recipient_email"
+              type="email"
+              autoComplete="email"
+              placeholder="nombre@ejemplo.com"
+              required
+            />
+            {!pending && formError && <p className="form-error" role="alert">{formError}</p>}
+          </form>
       </Modal>
     </main>
   );
