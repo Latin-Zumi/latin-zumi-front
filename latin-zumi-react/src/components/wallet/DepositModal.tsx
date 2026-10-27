@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
-import { useWallet } from '../../hooks/useWallet';
+import { useWallet } from '../../context/wallet';
 import { TransactionError, type DepositData } from '../../services/transactionService';
 import type { Currency } from '../../types';
 import {

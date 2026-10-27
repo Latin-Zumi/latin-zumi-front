@@ -1,6 +1,6 @@
 import { createContext } from 'react';
-import type { DepositData, TransferData } from '../services/transactionService';
-import type { Balance, Transaction } from '../types';
+import type { DepositData, TransferData } from '../../services/transactionService';
+import type { Balance, Transaction } from '../../types';
 
 export interface WalletContextValue {
   balances: Balance[];

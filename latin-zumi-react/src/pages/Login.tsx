@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import LoginForm from '../components/forms/LoginForm';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/auth';
 
 export default function Login() {
   const navigate = useNavigate();

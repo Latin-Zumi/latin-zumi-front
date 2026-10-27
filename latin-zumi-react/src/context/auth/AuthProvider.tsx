@@ -1,12 +1,12 @@
 import { useState, type ReactNode } from 'react';
-import { AuthContext } from './auth-context';
+import { AuthContext } from './AuthContext';
 import {
   getSession,
   logout as clearSession,
   saveSession,
   type AuthUser,
   type Session,
-} from '../services/authService';
+} from '../../services/authService';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(getSession);

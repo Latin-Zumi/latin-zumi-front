@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { WalletContext } from '../context/wallet-context';
+import { WalletContext } from './WalletContext';
 
 export function useWallet() {
   const context = useContext(WalletContext);

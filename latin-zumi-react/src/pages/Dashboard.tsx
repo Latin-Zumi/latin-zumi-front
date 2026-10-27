@@ -8,8 +8,8 @@ import Modal from '../components/ui/Modal';
 import BalanceCard from '../components/wallet/BalanceCard';
 import BalanceTable from '../components/wallet/BalanceTable';
 import DepositModal from '../components/wallet/DepositModal';
-import { useAuth } from '../hooks/useAuth';
-import { useWallet } from '../hooks/useWallet';
+import { useAuth } from '../context/auth';
+import { useWallet } from '../context/wallet';
 import {
   TransactionError,
   lookupUser,
