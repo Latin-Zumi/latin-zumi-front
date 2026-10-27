@@ -46,6 +46,7 @@ export function Navbar() {
       <div id="navbar-menu" className={`navbar__menu${open ? " is-open" : ""}`}>
         <nav className="navbar__links" aria-label="Navegación principal">
           <NavLink to="/" end className={navLinkClass}>Inicio</NavLink>
+          <NavLink to="/about" className={navLinkClass}>Nosotros</NavLink>
           {user && <NavLink to="/dashboard" className={navLinkClass}>Mi billetera</NavLink>}
           {isAdmin && <NavLink to="/admin" className={navLinkClass}>Panel admin</NavLink>}
         </nav>

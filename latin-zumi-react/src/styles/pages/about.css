@@ -1,0 +1,58 @@
+@layer components {
+  .about {
+    @apply flex flex-col gap-8;
+  }
+
+  .about__section {
+    @apply flex flex-col gap-4;
+
+    & h2 {
+      @apply text-xl;
+    }
+  }
+
+  .team-grid {
+    @apply grid gap-4 sm:grid-cols-2 lg:grid-cols-4;
+  }
+
+  .team-card {
+    @apply flex flex-col items-center gap-2 text-center;
+  }
+
+  .team-card__avatar {
+    @apply flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold text-white;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  }
+
+  .team-card__name {
+    @apply mt-2 text-base font-bold text-foreground;
+  }
+
+  .team-card__role {
+    @apply text-sm text-muted;
+  }
+
+  .team-card__email {
+    @apply mt-1 rounded-full border border-border px-3 py-1 text-xs font-medium text-primary no-underline break-all;
+
+    &:hover {
+      @apply bg-background;
+    }
+  }
+
+  .about__work {
+    @apply flex flex-col gap-3;
+
+    & h2 {
+      @apply text-xl;
+    }
+
+    & p {
+      @apply text-muted;
+    }
+
+    & strong {
+      @apply text-foreground;
+    }
+  }
+}
