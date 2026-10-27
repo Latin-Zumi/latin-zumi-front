@@ -12,6 +12,7 @@ type SolidButtonProps = ButtonBaseProps & {
   onClick?: () => void;
   disabled?: boolean;
   loading?: boolean;
+  form?: string;
 };
 
 type LinkButtonProps = ButtonBaseProps & {
@@ -26,7 +27,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
   const { size = 'md', children } = props;
 
   if (props.variant === 'solid') {
-    const { type = 'button', onClick, disabled, loading } = props;
+    const { type = 'button', onClick, disabled, loading, form } = props;
     const isDisabled = disabled || loading;
 
     return (
@@ -34,6 +35,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
         type={type}
         aria-busy={loading || undefined}
         className={`btn btn-${size}`}
+        form={form}
         onClick={onClick}
         disabled={isDisabled}
       >
