@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { WalletContext } from './wallet-context';
-import { useAuth } from '../hooks/useAuth';
+import { WalletContext } from './WalletContext';
+import { useAuth } from '../auth';
 import {
   TransactionError,
   deposit as depositService,
@@ -8,9 +8,9 @@ import {
   transfer as transferService,
   type DepositData,
   type TransferData,
-} from '../services/transactionService';
-import { WalletError, getBalances } from '../services/walletService';
-import type { Balance, OperationResult, Transaction } from '../types';
+} from '../../services/transactionService';
+import { WalletError, getBalances } from '../../services/walletService';
+import type { Balance, OperationResult, Transaction } from '../../types';
 
 const RECENT_LIMIT = 20;
 

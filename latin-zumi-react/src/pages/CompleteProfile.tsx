@@ -1,6 +1,6 @@
 import { Navigate, useNavigate } from 'react-router-dom';
 import CompleteProfileForm from '../components/forms/CompleteProfileForm';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/auth';
 import { isProfileComplete } from '../services/authService';
 
 export default function CompleteProfile() {

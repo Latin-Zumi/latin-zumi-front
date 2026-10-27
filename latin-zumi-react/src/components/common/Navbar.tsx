@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../context/auth";
 import Button from "../ui/Button";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
