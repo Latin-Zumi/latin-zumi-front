@@ -4,6 +4,7 @@ import Layout from './components/common/Layout';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import About from './pages/About';
+import CompleteProfile from './pages/CompleteProfile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/completar-perfil" element={<CompleteProfile />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>
