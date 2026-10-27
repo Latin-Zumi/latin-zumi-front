@@ -121,6 +121,40 @@
     }
   }
 
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 18px 0;
+    color: var(--color-muted);
+    font-size: 0.82rem;
+
+    &::before,
+    &::after {
+      flex: 1;
+      border-top: 1px solid var(--color-divider);
+      content: "";
+    }
+  }
+
+  .auth-card form > .auth-google-button {
+    color: var(--color-foreground);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: none;
+
+    &:hover:not(:disabled) {
+      background: var(--color-background);
+      box-shadow: none;
+    }
+  }
+
+  .auth-google-button__icon {
+    color: #4285f4;
+    font-size: 1.15rem;
+    font-weight: 750;
+  }
+
   .auth-card__footer {
     margin: 22px 0 0;
     padding-top: 19px;

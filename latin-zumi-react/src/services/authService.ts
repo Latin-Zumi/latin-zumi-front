@@ -1,4 +1,14 @@
 import { ApiConnectionError, postJson } from './apiClient';
+import { FirebaseError } from 'firebase/app';
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  type User as FirebaseUser,
+} from 'firebase/auth';
+import {
+  FirebaseConfigurationError,
+  getFirebaseAuth,
+} from './firebase';
 
 const STORAGE_KEY = 'latin-zumi:session';
 
@@ -12,7 +22,7 @@ export interface RegisterData extends LoginCredentials {
   pais: string;
 }
 
-export interface AuthUser {
+export interface BackendAuthUser {
   id: number;
   nombre: string;
   email: string;
@@ -22,12 +32,102 @@ export interface AuthUser {
   estado: string;
 }
 
-export interface Session {
-  token: string;
-  user: AuthUser;
+export interface GoogleAuthUser {
+  authProvider: 'google';
+  uid: string;
+  nombre: string | null;
+  email: string | null;
+  photoURL: string | null;
 }
 
+export type AuthUser = BackendAuthUser | GoogleAuthUser;
+
+export type Session =
+  | {
+      token: string;
+      user: BackendAuthUser;
+      authProvider?: 'backend';
+    }
+  | {
+      token: string;
+      user: GoogleAuthUser;
+      authProvider: 'firebase';
+    };
+
 export class AuthError extends Error {}
+
+function createGoogleSession(user: FirebaseUser): Promise<Session> {
+  return user.getIdToken().then((token) => ({
+    token,
+    authProvider: 'firebase',
+    user: {
+      authProvider: 'google',
+      uid: user.uid,
+      nombre: user.displayName,
+      email: user.email,
+      photoURL: user.photoURL,
+    },
+  }));
+}
+
+const googleSignInMessages: Record<string, string> = {
+  'auth/account-exists-with-different-credential':
+    'Ya existe una cuenta con este email. Ingresá con el método que usaste al registrarte.',
+  'auth/network-request-failed':
+    'No pudimos conectar con Google. Revisá tu conexión e intentá de nuevo.',
+  'auth/operation-not-allowed':
+    'El inicio de sesión con Google no está habilitado en Firebase.',
+  'auth/popup-blocked':
+    'El navegador bloqueó la ventana de Google. Permití las ventanas emergentes e intentá de nuevo.',
+  'auth/unauthorized-domain':
+    'Este dominio no está autorizado para iniciar sesión con Google.',
+  'auth/too-many-requests':
+    'Hubo demasiados intentos. Esperá un momento e intentá de nuevo.',
+};
+
+export async function loginWithGoogle(): Promise<Session | null> {
+  try {
+    const result = await signInWithPopup(
+      getFirebaseAuth(),
+      new GoogleAuthProvider(),
+    );
+    const session = await createGoogleSession(result.user);
+    logout();
+    return session;
+  } catch (error) {
+    if (error instanceof FirebaseConfigurationError) {
+      throw new AuthError(
+        'El inicio de sesión con Google no está configurado correctamente.',
+      );
+    }
+
+    if (error instanceof FirebaseError) {
+      if (
+        error.code === 'auth/popup-closed-by-user' ||
+        error.code === 'auth/cancelled-popup-request'
+      ) {
+        return null;
+      }
+
+      throw new AuthError(
+        googleSignInMessages[error.code] ??
+          'No pudimos iniciar sesión con Google. Probá de nuevo.',
+      );
+    }
+
+    throw error;
+  }
+}
+
+export function createFirebaseSession(user: FirebaseUser): Promise<Session> {
+  return createGoogleSession(user);
+}
+
+export function isFirebaseSession(
+  session: Session,
+): session is Extract<Session, { authProvider: 'firebase' }> {
+  return session.authProvider === 'firebase';
+}
 
 function saveSession(session: Session) {
   try {
@@ -75,7 +175,10 @@ async function postSession(
     );
   }
 
-  const data = (await response.json()) as Session;
+  const data = (await response.json()) as Extract<
+    Session,
+    { authProvider?: 'backend' }
+  >;
   const session: Session = { token: data.token, user: data.user };
   saveSession(session);
   return session;
