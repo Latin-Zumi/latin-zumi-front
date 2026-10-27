@@ -55,3 +55,14 @@ export const registerSchema = z.object({
   pais: paisSchema,
   password: passwordSchema,
 });
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z
+    .string()
+    .min(1, 'Ingresá tu contraseña')
+    .max(
+      PASSWORD_MAX_LENGTH,
+      `La contraseña no puede superar los ${PASSWORD_MAX_LENGTH} caracteres`,
+    ),
+});
