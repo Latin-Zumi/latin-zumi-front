@@ -3,7 +3,8 @@ import {
   EMAIL_MAX_LENGTH,
   NAME_MAX_LENGTH,
   PASSWORD_MAX_LENGTH,
-  PASSWORD_MIN_LENGTH,
+  PASSWORD_REQUIREMENTS_MESSAGE,
+  meetsPasswordRequirements,
 } from '../../utils/registration';
 
 export const PAISES = ['Argentina', 'Colombia', 'Otro'];
@@ -29,25 +30,11 @@ export const emailSchema = z
   .refine((value) => !/\s/u.test(value), 'El email no puede contener espacios')
   .email('Ingresá un email válido');
 
+// Mientras se escribe se muestra un solo mensaje; el detalle lo da la lista de requisitos
 export const passwordSchema = z
   .string()
-  .min(
-    PASSWORD_MIN_LENGTH,
-    `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres`,
-  )
-  .max(
-    PASSWORD_MAX_LENGTH,
-    `La contraseña no puede superar los ${PASSWORD_MAX_LENGTH} caracteres`,
-  )
-  .refine((value) => /\p{Lu}/u.test(value), 'Incluí al menos una mayúscula')
-  .refine(
-    (value) => /[\p{P}\p{S}]/u.test(value),
-    'Incluí al menos un carácter especial',
-  )
-  .refine(
-    (value) => value.trim().length > 0,
-    'La contraseña no puede contener solo espacios',
-  );
+  .max(PASSWORD_MAX_LENGTH, PASSWORD_REQUIREMENTS_MESSAGE)
+  .refine(meetsPasswordRequirements, PASSWORD_REQUIREMENTS_MESSAGE);
 
 export const registerSchema = z.object({
   nombre: nombreSchema,
