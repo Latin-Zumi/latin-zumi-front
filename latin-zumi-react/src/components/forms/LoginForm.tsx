@@ -1,59 +1,65 @@
 import { useState, type FormEvent } from 'react';
-import { z } from 'zod';
+import { useFieldValidation } from '../../hooks/useFieldValidation';
 import {
   AuthError,
   login,
   type Session,
 } from '../../services/authService';
+import { sanitizeLoginEmail } from '../../utils/login';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import GoogleSignInButton from './GoogleSignInButton';
+import { loginSchema } from './schemas';
 
-const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, 'Ingresá tu email')
-    .max(254, 'El email es demasiado largo')
-    .email('Ingresá un email válido'),
-  password: z
-    .string()
-    .min(1, 'Ingresá tu contraseña')
-    .min(6, 'Mínimo 6 caracteres')
-    .max(72, 'Máximo 72 caracteres'),
-});
+type LoginFields = {
+  email: string;
+  password: string;
+};
 
-type FieldErrors = Partial<Record<'email' | 'password', string>>;
+const LOGIN_FIELDS: (keyof LoginFields)[] = ['email', 'password'];
 
 interface LoginFormProps {
   onSuccess?: (session: Session) => void;
 }
 
 export default function LoginForm({ onSuccess }: LoginFormProps) {
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const validation = useFieldValidation<LoginFields>(
+    { email: '', password: '' },
+    (field, value) => {
+      const result = loginSchema.shape[field].safeParse(value);
+      return result.success ? undefined : result.error.issues[0]?.message;
+    },
+  );
+  const [emailBlurred, setEmailBlurred] = useState(false);
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const isSubmitting = loading || googleLoading;
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (isSubmitting) return;
     setFormError('');
 
-    const result = loginSchema.safeParse(form);
+    const result = loginSchema.safeParse(validation.values);
     if (!result.success) {
-      const errors: FieldErrors = {};
+      const errors: Partial<Record<keyof LoginFields, string>> = {};
       for (const issue of result.error.issues) {
-        const field = issue.path[0] as keyof FieldErrors;
-        if (!errors[field]) errors[field] = issue.message;
+        const field = LOGIN_FIELDS.find(
+          (candidate) => candidate === issue.path[0],
+        );
+        if (field && !errors[field]) errors[field] = issue.message;
       }
-      setFieldErrors(errors);
+
+      validation.setErrors(errors);
+      validation.markAllTouched();
+      setEmailBlurred(true);
+      const firstInvalid = LOGIN_FIELDS.find((field) => errors[field]);
+      if (firstInvalid) document.getElementById(firstInvalid)?.focus();
       return;
     }
 
-    setFieldErrors({});
+    validation.setErrors({});
     setLoading(true);
     try {
       const session = await login(result.data);
@@ -76,10 +82,22 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         label="Email"
         type="email"
         autoComplete="email"
-        value={form.email}
+        value={validation.values.email}
+        maxLength={254}
         disabled={isSubmitting}
-        error={fieldErrors.email}
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
+        error={emailBlurred ? validation.errors.email : undefined}
+        onChange={(event) => {
+          setFormError('');
+          validation.updateField(
+            'email',
+            sanitizeLoginEmail(event.target.value),
+            emailBlurred,
+          );
+        }}
+        onBlur={() => {
+          setEmailBlurred(true);
+          validation.blurField('email');
+        }}
       />
 
       <Input
@@ -87,10 +105,15 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         label="Contraseña"
         type="password"
         autoComplete="current-password"
-        value={form.password}
+        value={validation.values.password}
+        maxLength={72}
         disabled={isSubmitting}
-        error={fieldErrors.password}
-        onChange={(e) => setForm({ ...form, password: e.target.value })}
+        error={validation.errors.password}
+        onChange={(event) => {
+          setFormError('');
+          validation.updateField('password', event.target.value);
+        }}
+        onBlur={() => validation.blurField('password')}
       />
 
       {formError && (
@@ -99,7 +122,12 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         </p>
       )}
 
-      <Button variant="solid" type="submit" loading={loading} disabled={googleLoading}>
+      <Button
+        variant="solid"
+        type="submit"
+        loading={loading}
+        disabled={googleLoading}
+      >
         Ingresar
       </Button>
 

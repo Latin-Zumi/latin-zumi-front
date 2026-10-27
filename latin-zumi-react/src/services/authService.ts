@@ -90,7 +90,7 @@ export function login(credentials: LoginCredentials): Promise<Session> {
   return requestSession('/auth/login', credentials, (status) =>
     new AuthError(
       status === 401
-        ? 'Email o contraseña incorrectos.'
+        ? 'Email o contraseña incorrectos'
         : 'No pudimos iniciar sesión. Probá de nuevo.',
     ),
   );

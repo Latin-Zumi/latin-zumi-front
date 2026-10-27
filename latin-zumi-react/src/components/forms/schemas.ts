@@ -15,3 +15,16 @@ export const nombreSchema = z
 export const paisSchema = z
   .string()
   .refine((value) => PAISES.includes(value), 'Elegí un país válido');
+
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Ingresá tu email')
+    .max(254, 'El email no puede superar los 254 caracteres')
+    .refine((value) => !/\s/u.test(value), 'El email no puede contener espacios')
+    .email('Ingresá un email válido'),
+  password: z
+    .string()
+    .min(1, 'Ingresá tu contraseña')
+    .max(72, 'La contraseña no puede superar los 72 caracteres'),
+});
