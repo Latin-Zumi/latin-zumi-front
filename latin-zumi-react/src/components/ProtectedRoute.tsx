@@ -1,10 +1,12 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { LoadingState } from './states';
+import { isProfileComplete } from '../services/authService';
 
 export default function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user } = useAuth();
 
-  if (isLoading) return <LoadingState message="Verificando sesión..." />;
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  // Los usuarios de Google entran sin país: primero tienen que completar el perfil
+  if (!isProfileComplete(user)) return <Navigate to="/completar-perfil" replace />;
+  return <Outlet />;
 }

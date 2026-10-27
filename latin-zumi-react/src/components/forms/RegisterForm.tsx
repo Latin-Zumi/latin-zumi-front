@@ -3,28 +3,17 @@ import { z } from 'zod';
 import { AuthError, register, type Session } from '../../services/authService';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import GoogleSignInButton from './GoogleSignInButton';
+import { nombreSchema, paisSchema } from './schemas';
 
 const registerSchema = z.object({
-  nombre: z
-    .string()
-    .trim()
-    .min(2, 'Ingresá tu nombre')
-    .max(50, 'El nombre no puede superar los 50 caracteres')
-    .regex(
-      /^[\p{L}\p{M}]+(?:[ '\u2019\u002D\u00B7.][\p{L}\p{M}]+)*$/u,
-      'Ingresá un nombre válido, sin números',
-    ),
+  nombre: nombreSchema,
   email: z
     .string()
     .min(1, 'Ingresá tu email')
     .refine((value) => !/\s/u.test(value), 'El email no puede contener espacios')
     .email('Ingresá un email válido'),
-  pais: z
-    .string()
-    .refine(
-      (value) => ['Argentina', 'Colombia', 'Otro'].includes(value),
-      'Elegí un país válido',
-    ),
+  pais: paisSchema,
   password: z
     .string()
     .min(6, 'Mínimo 6 caracteres')
@@ -52,6 +41,8 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const isSubmitting = loading || googleLoading;
 
   const updateField = (field: keyof FieldErrors, value: string) => {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
@@ -74,6 +65,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setFormError('');
 
     const result = registerSchema.safeParse(form);
@@ -110,7 +102,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         label="Nombre"
         autoComplete="name"
         value={form.nombre}
-        disabled={loading}
+        disabled={isSubmitting}
         error={fieldErrors.nombre}
         onChange={(e) => updateField('nombre', e.target.value)}
       />
@@ -121,7 +113,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         type="email"
         autoComplete="email"
         value={form.email}
-        disabled={loading}
+        disabled={isSubmitting}
         error={fieldErrors.email}
         onChange={(e) => updateField('email', e.target.value)}
       />
@@ -134,7 +126,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
           id="pais"
           value={form.pais}
           className={fieldErrors.pais ? 'input-field--error' : undefined}
-          disabled={loading}
+          disabled={isSubmitting}
           aria-invalid={!!fieldErrors.pais}
           aria-describedby={fieldErrors.pais ? 'pais-error' : undefined}
           onChange={(e) => updateField('pais', e.target.value)}
@@ -157,7 +149,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         type="password"
         autoComplete="new-password"
         value={form.password}
-        disabled={loading}
+        disabled={isSubmitting}
         error={fieldErrors.password}
         onChange={(e) => updateField('password', e.target.value)}
       />
@@ -168,9 +160,15 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         </p>
       )}
 
-      <Button variant="solid" type="submit" loading={loading}>
+      <Button variant="solid" type="submit" loading={loading} disabled={googleLoading}>
         Crear cuenta
       </Button>
+
+      <GoogleSignInButton
+        disabled={loading}
+        onBusyChange={setGoogleLoading}
+        onSuccess={onSuccess}
+      />
     </form>
   );
 }

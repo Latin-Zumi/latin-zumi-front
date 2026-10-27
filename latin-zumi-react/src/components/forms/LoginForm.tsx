@@ -3,11 +3,11 @@ import { z } from 'zod';
 import {
   AuthError,
   login,
-  loginWithGoogle,
   type Session,
 } from '../../services/authService';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import GoogleSignInButton from './GoogleSignInButton';
 
 const loginSchema = z.object({
   email: z
@@ -69,25 +69,6 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    if (isSubmitting) return;
-    setFormError('');
-    setGoogleLoading(true);
-
-    try {
-      const session = await loginWithGoogle();
-      if (session) onSuccess?.(session);
-    } catch (error) {
-      setFormError(
-        error instanceof AuthError
-          ? error.message
-          : 'Ocurrió un error inesperado. Probá de nuevo.',
-      );
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
   return (
     <form onSubmit={handleSubmit} noValidate>
       <Input
@@ -122,28 +103,11 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         Ingresar
       </Button>
 
-      <div className="auth-divider" aria-hidden="true">
-        <span>o</span>
-      </div>
-
-      <button
-        className="btn btn-lg auth-google-button"
-        type="button"
-        onClick={() => void handleGoogleSignIn()}
-        disabled={isSubmitting}
-        aria-busy={googleLoading || undefined}
-      >
-        {googleLoading ? (
-          'Conectando con Google...'
-        ) : (
-          <>
-            <span className="auth-google-button__icon" aria-hidden="true">
-              G
-            </span>
-            Continuar con Google
-          </>
-        )}
-      </button>
+      <GoogleSignInButton
+        disabled={loading}
+        onBusyChange={setGoogleLoading}
+        onSuccess={onSuccess}
+      />
     </form>
   );
 }
