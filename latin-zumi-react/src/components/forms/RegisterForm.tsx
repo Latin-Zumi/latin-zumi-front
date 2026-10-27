@@ -1,85 +1,93 @@
 import { useState, type FormEvent } from 'react';
-import { z } from 'zod';
 import { AuthError, register, type Session } from '../../services/authService';
+import { useFieldValidation } from '../../hooks/useFieldValidation';
+import {
+  EMAIL_MAX_LENGTH,
+  hasDisallowedNameCharacters,
+  getPasswordRequirements,
+  getPasswordLengthMessage,
+  NAME_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  sanitizeName,
+} from '../../utils/registration';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import GoogleSignInButton from './GoogleSignInButton';
-import { nombreSchema, paisSchema } from './schemas';
+import { PAISES, registerSchema } from './schemas';
 
-const registerSchema = z.object({
-  nombre: nombreSchema,
-  email: z
-    .string()
-    .min(1, 'Ingresá tu email')
-    .refine((value) => !/\s/u.test(value), 'El email no puede contener espacios')
-    .email('Ingresá un email válido'),
-  pais: paisSchema,
-  password: z
-    .string()
-    .min(6, 'Mínimo 6 caracteres')
-    .refine(
-      (value) => value.trim().length > 0,
-      'La contraseña no puede contener solo espacios',
-    ),
-});
+type RegisterFields = {
+  nombre: string;
+  email: string;
+  pais: string;
+  password: string;
+};
 
-type FieldErrors = Partial<
-  Record<'nombre' | 'email' | 'pais' | 'password', string>
->;
+const REGISTER_FIELDS: (keyof RegisterFields)[] = [
+  'nombre',
+  'email',
+  'pais',
+  'password',
+];
 
 interface RegisterFormProps {
   onSuccess?: (session: Session) => void;
 }
 
 export default function RegisterForm({ onSuccess }: RegisterFormProps) {
-  const [form, setForm] = useState({
-    nombre: '',
-    email: '',
-    pais: '',
-    password: '',
-  });
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const validation = useFieldValidation<RegisterFields>(
+    { nombre: '', email: '', pais: '', password: '' },
+    (field, value) => {
+      const result = registerSchema.shape[field].safeParse(value);
+      return result.success ? undefined : result.error.issues[0]?.message;
+    },
+  );
   const [formError, setFormError] = useState('');
+  const [nameNotice, setNameNotice] = useState('');
+  const [emailBlurred, setEmailBlurred] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const isSubmitting = loading || googleLoading;
+  const passwordLengthMessage = getPasswordLengthMessage(
+    validation.values.password.length,
+  );
+  const passwordRequirements = getPasswordRequirements(validation.values.password);
+  const showPasswordFeedback = validation.touched.password;
 
-  const updateField = (field: keyof FieldErrors, value: string) => {
-    setForm((currentForm) => ({ ...currentForm, [field]: value }));
-    setFieldErrors((currentErrors) => {
-      if (!currentErrors[field]) return currentErrors;
-
-      const result = registerSchema.shape[field].safeParse(value);
-      if (result.success) {
-        const nextErrors = { ...currentErrors };
-        delete nextErrors[field];
-        return nextErrors;
-      }
-
-      return {
-        ...currentErrors,
-        [field]: result.error.issues[0]?.message,
-      };
-    });
+  const updateName = (value: string) => {
+    const containsDisallowed = hasDisallowedNameCharacters(value);
+    const sanitized = sanitizeName(value);
+    setNameNotice(
+      containsDisallowed
+        ? 'El nombre no puede contener números ni símbolos'
+        : '',
+    );
+    validation.updateField('nombre', sanitized);
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (isSubmitting) return;
     setFormError('');
 
-    const result = registerSchema.safeParse(form);
+    const result = registerSchema.safeParse(validation.values);
     if (!result.success) {
-      const errors: FieldErrors = {};
+      const errors: Partial<Record<keyof RegisterFields, string>> = {};
       for (const issue of result.error.issues) {
-        const field = issue.path[0] as keyof FieldErrors;
-        if (!errors[field]) errors[field] = issue.message;
+        const field = REGISTER_FIELDS.find(
+          (candidate) => candidate === issue.path[0],
+        );
+        if (field && !errors[field]) errors[field] = issue.message;
       }
-      setFieldErrors(errors);
+      validation.setErrors(errors);
+      validation.markAllTouched();
+      setEmailBlurred(true);
+      const firstInvalid = REGISTER_FIELDS.find((field) => errors[field]);
+      if (firstInvalid) document.getElementById(firstInvalid)?.focus();
       return;
     }
 
-    setFieldErrors({});
+    validation.setErrors({});
     setLoading(true);
     try {
       const session = await register(result.data);
@@ -101,10 +109,13 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         id="nombre"
         label="Nombre"
         autoComplete="name"
-        value={form.nombre}
+        value={validation.values.nombre}
+        maxLength={NAME_MAX_LENGTH}
         disabled={isSubmitting}
-        error={fieldErrors.nombre}
-        onChange={(e) => updateField('nombre', e.target.value)}
+        error={validation.errors.nombre}
+        notice={nameNotice}
+        onChange={(event) => updateName(event.target.value)}
+        onBlur={() => validation.blurField('nombre')}
       />
 
       <Input
@@ -112,10 +123,17 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         label="Email"
         type="email"
         autoComplete="email"
-        value={form.email}
+        value={validation.values.email}
+        maxLength={EMAIL_MAX_LENGTH}
         disabled={isSubmitting}
-        error={fieldErrors.email}
-        onChange={(e) => updateField('email', e.target.value)}
+        error={emailBlurred ? validation.errors.email : undefined}
+        onChange={(event) =>
+          validation.updateField('email', event.target.value, emailBlurred)
+        }
+        onBlur={() => {
+          setEmailBlurred(true);
+          validation.blurField('email');
+        }}
       />
 
       <div className="input-container">
@@ -124,21 +142,22 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         </label>
         <select
           id="pais"
-          value={form.pais}
-          className={fieldErrors.pais ? 'input-field--error' : undefined}
+          value={validation.values.pais}
+          className={validation.errors.pais ? 'input-field--error' : undefined}
           disabled={isSubmitting}
-          aria-invalid={!!fieldErrors.pais}
-          aria-describedby={fieldErrors.pais ? 'pais-error' : undefined}
-          onChange={(e) => updateField('pais', e.target.value)}
+          aria-invalid={!!validation.errors.pais}
+          aria-describedby={validation.errors.pais ? 'pais-error' : undefined}
+          onChange={(event) => validation.updateField('pais', event.target.value)}
+          onBlur={() => validation.blurField('pais')}
         >
           <option value="">Elegí un país</option>
-          <option value="Argentina">Argentina</option>
-          <option value="Colombia">Colombia</option>
-          <option value="Otro">Otro</option>
+          {PAISES.map((pais) => (
+            <option key={pais} value={pais}>{pais}</option>
+          ))}
         </select>
-        {fieldErrors.pais && (
+        {validation.errors.pais && (
           <span id="pais-error" className="input-error" role="alert">
-            {fieldErrors.pais}
+            {validation.errors.pais}
           </span>
         )}
       </div>
@@ -148,11 +167,46 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         label="Contraseña"
         type="password"
         autoComplete="new-password"
-        value={form.password}
+        value={validation.values.password}
+        maxLength={PASSWORD_MAX_LENGTH}
         disabled={isSubmitting}
-        error={fieldErrors.password}
-        onChange={(e) => updateField('password', e.target.value)}
+        error={validation.errors.password}
+        aria-describedby={showPasswordFeedback ? 'password-feedback' : undefined}
+        onChange={(event) =>
+          validation.updateField('password', event.target.value)
+        }
+        onBlur={() => validation.blurField('password')}
       />
+      {showPasswordFeedback && (
+        <ul
+          id="password-feedback"
+          className="mb-4 flex flex-col gap-1 text-sm text-muted"
+          role="status"
+          aria-live="polite"
+        >
+          <li className={passwordRequirements.hasMinimumLength ? 'text-success' : undefined}>
+            <span aria-hidden="true">
+              {passwordRequirements.hasMinimumLength ? '✓' : '○'}
+            </span>
+            {' '}Mínimo {PASSWORD_MIN_LENGTH} caracteres
+            {!passwordRequirements.hasMinimumLength && passwordLengthMessage
+              ? ` (${passwordLengthMessage.toLowerCase()})`
+              : ''}
+          </li>
+          <li className={passwordRequirements.hasUppercase ? 'text-success' : undefined}>
+            <span aria-hidden="true">
+              {passwordRequirements.hasUppercase ? '✓' : '○'}
+            </span>
+            {' '}Incluir una mayúscula
+          </li>
+          <li className={passwordRequirements.hasSpecialCharacter ? 'text-success' : undefined}>
+            <span aria-hidden="true">
+              {passwordRequirements.hasSpecialCharacter ? '✓' : '○'}
+            </span>
+            {' '}Incluir un carácter especial
+          </li>
+        </ul>
+      )}
 
       {formError && (
         <p role="alert" className="form-error">
