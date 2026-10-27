@@ -7,6 +7,7 @@ import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import BalanceCard from '../components/wallet/BalanceCard';
 import BalanceTable from '../components/wallet/BalanceTable';
+import DepositModal from '../components/wallet/DepositModal';
 import { useAuth } from '../hooks/useAuth';
 import { useWallet } from '../hooks/useWallet';
 import {
@@ -76,6 +77,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const wallet = useWallet();
   const [transferOpen, setTransferOpen] = useState(false);
+  const [depositOpen, setDepositOpen] = useState(false);
   const [pending, setPending] = useState<PendingTransfer | null>(null);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -222,6 +224,9 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="home-hero__actions">
+          <Button variant="solid" size="lg" onClick={() => setDepositOpen(true)}>
+            Depositar
+          </Button>
           <Button variant="solid" size="lg" onClick={() => setTransferOpen(true)}>
             Transferir
           </Button>
@@ -411,6 +416,11 @@ export default function Dashboard() {
             {!pending && formError && <p className="form-error" role="alert">{formError}</p>}
           </form>
       </Modal>
+      <DepositModal
+        isOpen={depositOpen}
+        onClose={() => setDepositOpen(false)}
+        defaultCurrency={preferredCurrency}
+      />
     </main>
   );
 }
