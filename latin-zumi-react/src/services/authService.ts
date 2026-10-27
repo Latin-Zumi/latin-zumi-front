@@ -2,7 +2,11 @@ import { ApiConnectionError, postJson } from './apiClient';
 import { FirebaseError } from 'firebase/app';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { FirebaseConfigurationError, getFirebaseAuth } from './firebase';
-import { findOrCreateMockGoogleUser } from '../mocks/users';
+import {
+  findOrCreateMockGoogleUser,
+  loginMockUser,
+  registerMockUser,
+} from '../mocks/users';
 
 const STORAGE_KEY = 'latin-zumi:session';
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
@@ -86,7 +90,23 @@ async function requestSession(
   return session;
 }
 
-export function login(credentials: LoginCredentials): Promise<Session> {
+const delay = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+function startMockSession(user: AuthUser): Session {
+  const session: Session = { token: `mock-${user.id}`, user };
+  saveSession(session);
+  return session;
+}
+
+export async function login(credentials: LoginCredentials): Promise<Session> {
+  if (USE_MOCK) {
+    await delay(400); // simula la latencia de la API
+    const user = loginMockUser(credentials.email, credentials.password);
+    if (!user) throw new AuthError('Email o contraseña incorrectos');
+    return startMockSession(user);
+  }
+
   return requestSession('/auth/login', credentials, (status) =>
     new AuthError(
       status === 401
@@ -96,7 +116,14 @@ export function login(credentials: LoginCredentials): Promise<Session> {
   );
 }
 
-export function register(data: RegisterData): Promise<Session> {
+export async function register(data: RegisterData): Promise<Session> {
+  if (USE_MOCK) {
+    await delay(400); // simula la latencia de la API
+    const user = registerMockUser(data);
+    if (!user) throw new AuthError('Ya existe una cuenta con ese email.');
+    return startMockSession(user);
+  }
+
   return requestSession('/auth/register', data, (status) =>
     new AuthError(
       status === 409
@@ -146,16 +173,13 @@ export async function loginWithGoogle(): Promise<Session | null> {
 
     try {
       if (USE_MOCK) {
-        const session: Session = {
-          token: `mock-google-${user.uid}`,
-          user: findOrCreateMockGoogleUser({
+        return startMockSession(
+          findOrCreateMockGoogleUser({
             email: user.email ?? `${user.uid}@google.mock`,
             nombre: user.displayName ?? '',
             foto_url: user.photoURL,
           }),
-        };
-        saveSession(session);
-        return session;
+        );
       }
 
       const idToken = await user.getIdToken();

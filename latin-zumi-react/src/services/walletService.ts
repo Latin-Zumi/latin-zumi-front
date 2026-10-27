@@ -1,4 +1,4 @@
-import { mockBalances } from '../mocks/balances';
+import { getMockBalances } from '../mocks/wallets';
 import { getSession } from './authService';
 import { ApiConnectionError, apiRequest } from './apiClient';
 import type { Balance } from '../types';
@@ -11,14 +11,16 @@ const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function getBalances(): Promise<Balance[]> {
-  if (USE_MOCK) {
-    await delay(400); // simula la latencia de la API
-    return structuredClone(mockBalances);
-  }
-
   const session = getSession();
   if (!session) {
     throw new WalletError('Necesitás iniciar sesión.');
+  }
+
+  if (USE_MOCK) {
+    await delay(400); // simula la latencia de la API
+    const result = getMockBalances(session.user.email);
+    if (!result.ok) throw new WalletError('No pudimos cargar tus balances. Probá de nuevo.');
+    return result.data;
   }
 
   let response: Response;
