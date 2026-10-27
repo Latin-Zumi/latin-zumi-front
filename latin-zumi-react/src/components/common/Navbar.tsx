@@ -10,7 +10,17 @@ export function Navbar() {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
-  const isAdmin = user?.roles.includes("admin") ?? false;
+  const [logoutError, setLogoutError] = useState('');
+  const isAdmin = user && 'roles' in user && user.roles.includes('admin');
+
+  const handleLogout = async () => {
+    setLogoutError('');
+    try {
+      await logout();
+    } catch {
+      setLogoutError('No pudimos cerrar sesión. Probá de nuevo.');
+    }
+  };
 
   // Cerrar el menú móvil al cambiar de ruta
   const [lastPath, setLastPath] = useState(pathname);
@@ -46,6 +56,7 @@ export function Navbar() {
       <div id="navbar-menu" className={`navbar__menu${open ? " is-open" : ""}`}>
         <nav className="navbar__links" aria-label="Navegación principal">
           <NavLink to="/" end className={navLinkClass}>Inicio</NavLink>
+          <NavLink to="/about" className={navLinkClass}>Nosotros</NavLink>
           {user && <NavLink to="/dashboard" className={navLinkClass}>Mi billetera</NavLink>}
           {isAdmin && <NavLink to="/admin" className={navLinkClass}>Panel admin</NavLink>}
         </nav>
@@ -54,9 +65,13 @@ export function Navbar() {
           {user ? (
             <>
               <span className="account-identity__name">
-                {user.nombre || user.email}
+                {user.nombre || user.email || 'Cuenta de Google'}
               </span>
-              <Button variant="solid" size="sm" onClick={logout}>
+              <Button
+                variant="solid"
+                size="sm"
+                onClick={() => void handleLogout()}
+              >
                 Salir
               </Button>
             </>
@@ -67,6 +82,11 @@ export function Navbar() {
             </>
           )}
         </div>
+        {logoutError && (
+          <p className="form-error" role="alert">
+            {logoutError}
+          </p>
+        )}
       </div>
     </div>
   );

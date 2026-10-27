@@ -1,11 +1,19 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { LoadingState } from '../components/states';
 import LoginForm from '../components/forms/LoginForm';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { isAuthenticated, startSession } = useAuth();
+  const { isAuthenticated, isLoading, startSession } = useAuth();
 
+  if (isLoading) {
+    return (
+      <main className="auth-page">
+        <LoadingState message="Verificando sesión..." />
+      </main>
+    );
+  }
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   return (

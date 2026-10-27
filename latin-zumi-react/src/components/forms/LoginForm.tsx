@@ -1,6 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { z } from 'zod';
-import { AuthError, login, type Session } from '../../services/authService';
+import {
+  AuthError,
+  login,
+  loginWithGoogle,
+  type Session,
+} from '../../services/authService';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 
@@ -29,9 +34,12 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const isSubmitting = loading || googleLoading;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setFormError('');
 
     const result = loginSchema.safeParse(form);
@@ -61,6 +69,25 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    if (isSubmitting) return;
+    setFormError('');
+    setGoogleLoading(true);
+
+    try {
+      const session = await loginWithGoogle();
+      if (session) onSuccess?.(session);
+    } catch (error) {
+      setFormError(
+        error instanceof AuthError
+          ? error.message
+          : 'Ocurrió un error inesperado. Probá de nuevo.',
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} noValidate>
       <Input
@@ -69,7 +96,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         type="email"
         autoComplete="email"
         value={form.email}
-        disabled={loading}
+        disabled={isSubmitting}
         error={fieldErrors.email}
         onChange={(e) => setForm({ ...form, email: e.target.value })}
       />
@@ -80,7 +107,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         type="password"
         autoComplete="current-password"
         value={form.password}
-        disabled={loading}
+        disabled={isSubmitting}
         error={fieldErrors.password}
         onChange={(e) => setForm({ ...form, password: e.target.value })}
       />
@@ -91,9 +118,32 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         </p>
       )}
 
-      <Button variant="solid" type="submit" loading={loading}>
+      <Button variant="solid" type="submit" loading={loading} disabled={googleLoading}>
         Ingresar
       </Button>
+
+      <div className="auth-divider" aria-hidden="true">
+        <span>o</span>
+      </div>
+
+      <button
+        className="btn btn-lg auth-google-button"
+        type="button"
+        onClick={() => void handleGoogleSignIn()}
+        disabled={isSubmitting}
+        aria-busy={googleLoading || undefined}
+      >
+        {googleLoading ? (
+          'Conectando con Google...'
+        ) : (
+          <>
+            <span className="auth-google-button__icon" aria-hidden="true">
+              G
+            </span>
+            Continuar con Google
+          </>
+        )}
+      </button>
     </form>
   );
 }
