@@ -1,14 +1,17 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { WalletContext } from './wallet-context';
-import { useAuth } from '../hooks/useAuth';
+import { WalletContext } from './WalletContext';
+import { useAuth } from '../auth';
 import {
   TransactionError,
+  deposit as depositService,
+  exchange as exchangeService,
   getTransactions,
   transfer as transferService,
+  type DepositData,
   type TransferData,
-} from '../services/transactionService';
-import { WalletError, getBalances } from '../services/walletService';
-import type { Balance, Transaction } from '../types';
+} from '../../services/transactionService';
+import { WalletError, getBalances } from '../../services/walletService';
+import type { Balance, OperationResult, Transaction } from '../../types';
 
 const RECENT_LIMIT = 20;
 
@@ -62,8 +65,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (email) setData(await fetchWallet(email));
   };
 
-  const transfer = async (transferData: TransferData, idempotencyKey: string) => {
-    const result = await transferService(transferData, idempotencyKey);
+  // Cada operación devuelve los saldos actualizados y el movimiento creado
+  const applyResult = (result: OperationResult) => {
     setData((previous) =>
       previous && {
         ...previous,
@@ -78,6 +81,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return result.transaction;
   };
 
+  const transfer = async (transferData: TransferData, idempotencyKey: string) =>
+    applyResult(await transferService(transferData, idempotencyKey));
+
+  const deposit = async (depositData: DepositData, idempotencyKey: string) =>
+    applyResult(await depositService(depositData, idempotencyKey));
+
+  const exchange = async (quoteId: string, idempotencyKey: string) =>
+    applyResult(await exchangeService(quoteId, idempotencyKey));
+
   return (
     <WalletContext.Provider
       value={{
@@ -87,6 +99,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         error: current?.error ?? '',
         reload,
         transfer,
+        deposit,
+        exchange,
       }}
     >
       {children}

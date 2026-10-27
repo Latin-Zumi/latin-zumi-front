@@ -30,3 +30,14 @@ export function parseAmountInput(value: string): number | null {
   const cents = toCents(normalized);
   return cents > 0 && Number.isSafeInteger(cents) ? cents : null;
 }
+
+// Muestra el tipo de cambio en el sentido en que la cifra es mayor a 1:
+// "1 USD = 1.445,00 ARS" se lee mejor que "1 ARS = 0,0007 USD"
+export function formatExchangeRate(from: Currency, to: Currency, rate: number): string {
+  const [base, quote, value] = rate >= 1 ? [from, to, rate] : [to, from, 1 / rate];
+  const formatted = new Intl.NumberFormat('es-AR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: value < 10 ? 4 : 2,
+  }).format(value);
+  return `1 ${base} = ${formatted} ${quote}`;
+}

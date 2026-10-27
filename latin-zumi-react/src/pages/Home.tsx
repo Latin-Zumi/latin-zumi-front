@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import RateChart from "../components/charts/RateChart";
 import RateCard from "../components/wallet/RateCard";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../context/auth";
 import {
   QUOTED_CURRENCIES,
   formatChange,

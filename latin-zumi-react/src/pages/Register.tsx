@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/forms/RegisterForm';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/auth';
 
 export default function Register() {
   const navigate = useNavigate();

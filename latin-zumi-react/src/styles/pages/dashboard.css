@@ -189,6 +189,10 @@
     @apply text-success;
   }
 
+  .dashboard__movement-icon--neutral {
+    @apply text-foreground;
+  }
+
   .dashboard__movement-detail {
     @apply flex min-w-0 flex-1 flex-col gap-1;
 
@@ -208,6 +212,10 @@
 
   .dashboard__movement-amount--income {
     @apply text-success;
+  }
+
+  .dashboard__movement-amount--neutral {
+    @apply text-foreground;
   }
 
   .dashboard__transfer-form {
