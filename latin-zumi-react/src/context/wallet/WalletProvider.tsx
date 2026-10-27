@@ -4,6 +4,7 @@ import { useAuth } from '../auth';
 import {
   TransactionError,
   deposit as depositService,
+  exchange as exchangeService,
   getTransactions,
   transfer as transferService,
   type DepositData,
@@ -86,6 +87,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const deposit = async (depositData: DepositData, idempotencyKey: string) =>
     applyResult(await depositService(depositData, idempotencyKey));
 
+  const exchange = async (quoteId: string, idempotencyKey: string) =>
+    applyResult(await exchangeService(quoteId, idempotencyKey));
+
   return (
     <WalletContext.Provider
       value={{
@@ -96,6 +100,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         reload,
         transfer,
         deposit,
+        exchange,
       }}
     >
       {children}
