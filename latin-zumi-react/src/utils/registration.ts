@@ -3,9 +3,11 @@ export const EMAIL_MAX_LENGTH = 254;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 72;
 
+export const PASSWORD_REQUIREMENTS_MESSAGE =
+  'La contraseña no cumple los requisitos necesarios';
+
 export interface PasswordRequirements {
   hasMinimumLength: boolean;
-  hasMaximumLength: boolean;
   hasUppercase: boolean;
   hasSpecialCharacter: boolean;
 }
@@ -13,10 +15,13 @@ export interface PasswordRequirements {
 export function getPasswordRequirements(value: string): PasswordRequirements {
   return {
     hasMinimumLength: value.length >= PASSWORD_MIN_LENGTH,
-    hasMaximumLength: value.length <= PASSWORD_MAX_LENGTH,
     hasUppercase: /\p{Lu}/u.test(value),
     hasSpecialCharacter: /[\p{P}\p{S}]/u.test(value),
   };
+}
+
+export function meetsPasswordRequirements(value: string): boolean {
+  return Object.values(getPasswordRequirements(value)).every(Boolean);
 }
 
 export function sanitizeName(value: string): string {
@@ -31,14 +36,9 @@ export function hasDisallowedNameCharacters(value: string): boolean {
   return /[^\p{L}\p{M} '’-]/u.test(value);
 }
 
+// El campo tiene maxLength, así que solo puede faltar longitud, nunca sobrar
 export function getPasswordLengthMessage(length: number): string {
-  if (length < PASSWORD_MIN_LENGTH) {
-    const remaining = PASSWORD_MIN_LENGTH - length;
-    return `Faltan ${remaining} ${remaining === 1 ? 'carácter' : 'caracteres'}`;
-  }
-  if (length > PASSWORD_MAX_LENGTH) {
-    const excess = length - PASSWORD_MAX_LENGTH;
-    return `Sobran ${excess} ${excess === 1 ? 'carácter' : 'caracteres'}`;
-  }
-  return '';
+  const remaining = PASSWORD_MIN_LENGTH - length;
+  if (remaining <= 0) return '';
+  return `faltan ${remaining} ${remaining === 1 ? 'carácter' : 'caracteres'}`;
 }
