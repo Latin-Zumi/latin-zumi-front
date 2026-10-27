@@ -15,4 +15,8 @@
   .form-error {
     @apply text-sm text-danger;
   }
+
+  .form-notice {
+    @apply rounded-sm border border-info/30 bg-info/10 px-3 py-2 text-sm text-foreground;
+  }
 }

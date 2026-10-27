@@ -11,7 +11,7 @@ export function Navbar() {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const [logoutError, setLogoutError] = useState('');
-  const isAdmin = user && 'roles' in user && user.roles.includes('admin');
+  const isAdmin = user?.roles.includes('admin') ?? false;
 
   const handleLogout = async () => {
     setLogoutError('');
@@ -65,7 +65,7 @@ export function Navbar() {
           {user ? (
             <>
               <span className="account-identity__name">
-                {user.nombre || user.email || 'Cuenta de Google'}
+                {user.nombre || user.email}
               </span>
               <Button
                 variant="solid"

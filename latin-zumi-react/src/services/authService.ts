@@ -1,16 +1,11 @@
 import { ApiConnectionError, postJson } from './apiClient';
 import { FirebaseError } from 'firebase/app';
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  type User as FirebaseUser,
-} from 'firebase/auth';
-import {
-  FirebaseConfigurationError,
-  getFirebaseAuth,
-} from './firebase';
+import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { FirebaseConfigurationError, getFirebaseAuth } from './firebase';
+import { findOrCreateMockGoogleUser } from '../mocks/users';
 
 const STORAGE_KEY = 'latin-zumi:session';
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 export interface LoginCredentials {
   email: string;
@@ -22,52 +17,93 @@ export interface RegisterData extends LoginCredentials {
   pais: string;
 }
 
-export interface BackendAuthUser {
+export interface AuthUser {
   id: number;
   nombre: string;
   email: string;
-  pais: string;
+  pais: string | null; // null hasta que un usuario de Google completa su perfil
   moneda_preferida: string;
   roles: string[];
   estado: string;
+  foto_url?: string | null;
 }
 
-export interface GoogleAuthUser {
-  authProvider: 'google';
-  uid: string;
-  nombre: string | null;
-  email: string | null;
-  photoURL: string | null;
+export interface Session {
+  token: string;
+  user: AuthUser;
 }
-
-export type AuthUser = BackendAuthUser | GoogleAuthUser;
-
-export type Session =
-  | {
-      token: string;
-      user: BackendAuthUser;
-      authProvider?: 'backend';
-    }
-  | {
-      token: string;
-      user: GoogleAuthUser;
-      authProvider: 'firebase';
-    };
 
 export class AuthError extends Error {}
 
-function createGoogleSession(user: FirebaseUser): Promise<Session> {
-  return user.getIdToken().then((token) => ({
-    token,
-    authProvider: 'firebase',
-    user: {
-      authProvider: 'google',
-      uid: user.uid,
-      nombre: user.displayName,
-      email: user.email,
-      photoURL: user.photoURL,
-    },
-  }));
+// La función existe en la app pero el backend todavía no la ofrece
+export class AuthUnavailableError extends AuthError {}
+
+export function isProfileComplete(user: AuthUser): boolean {
+  return Boolean(user.pais && user.nombre.trim());
+}
+
+export function saveSession(session: Session) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    // storage no disponible: la sesión queda solo en memoria
+  }
+}
+
+export function getSession(): Session | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const session = JSON.parse(raw) as Partial<Session>;
+    // Descarta sesiones viejas que no vienen del backend (por ejemplo, las de Firebase)
+    if (!session.token || !Array.isArray(session.user?.roles)) return null;
+    return session as Session;
+  } catch {
+    return null;
+  }
+}
+
+async function requestSession(
+  path: string,
+  body: unknown,
+  errorFor: (status: number) => AuthError,
+): Promise<Session> {
+  let response: Response;
+  try {
+    response = await postJson(path, body);
+  } catch (error) {
+    if (error instanceof ApiConnectionError) {
+      throw new AuthError('No pudimos conectar con el servidor. Probá de nuevo.');
+    }
+    throw error;
+  }
+
+  if (!response.ok) throw errorFor(response.status);
+
+  const data = (await response.json()) as Session;
+  const session: Session = { token: data.token, user: data.user };
+  saveSession(session);
+  return session;
+}
+
+export function login(credentials: LoginCredentials): Promise<Session> {
+  return requestSession('/auth/login', credentials, (status) =>
+    new AuthError(
+      status === 401
+        ? 'Email o contraseña incorrectos'
+        : 'No pudimos iniciar sesión. Probá de nuevo.',
+    ),
+  );
+}
+
+export function register(data: RegisterData): Promise<Session> {
+  return requestSession('/auth/register', data, (status) =>
+    new AuthError(
+      status === 409
+        ? 'Ya existe una cuenta con ese email.'
+        : 'No pudimos crear la cuenta. Probá de nuevo.',
+    ),
+  );
 }
 
 const googleSignInMessages: Record<string, string> = {
@@ -85,16 +121,52 @@ const googleSignInMessages: Record<string, string> = {
     'Hubo demasiados intentos. Esperá un momento e intentá de nuevo.',
 };
 
+function googleBackendError(status: number): AuthError {
+  if (status === 404 || status === 405 || status === 501) {
+    return new AuthUnavailableError(
+      'El ingreso con Google todavía no está disponible. Mientras tanto, usá tu email y contraseña.',
+    );
+  }
+  if (status === 401) {
+    return new AuthError('Google no pudo confirmar tu identidad. Probá de nuevo.');
+  }
+  if (status === 409) {
+    return new AuthError(
+      'Ya existe una cuenta con este email. Ingresá con tu email y contraseña.',
+    );
+  }
+  return new AuthError('No pudimos iniciar sesión con Google. Probá de nuevo.');
+}
+
+// Google identifica al usuario; el backend lo crea o lo vincula y devuelve su propia sesión
 export async function loginWithGoogle(): Promise<Session | null> {
   try {
-    const result = await signInWithPopup(
-      getFirebaseAuth(),
-      new GoogleAuthProvider(),
-    );
-    const session = await createGoogleSession(result.user);
-    logout();
-    return session;
+    const auth = getFirebaseAuth();
+    const { user } = await signInWithPopup(auth, new GoogleAuthProvider());
+
+    try {
+      if (USE_MOCK) {
+        const session: Session = {
+          token: `mock-google-${user.uid}`,
+          user: findOrCreateMockGoogleUser({
+            email: user.email ?? `${user.uid}@google.mock`,
+            nombre: user.displayName ?? '',
+            foto_url: user.photoURL,
+          }),
+        };
+        saveSession(session);
+        return session;
+      }
+
+      const idToken = await user.getIdToken();
+      return await requestSession('/auth/google', { idToken }, googleBackendError);
+    } finally {
+      // La sesión de Firebase solo sirve para el intercambio
+      await signOut(auth).catch(() => undefined);
+    }
   } catch (error) {
+    if (error instanceof AuthError) throw error;
+
     if (error instanceof FirebaseConfigurationError) {
       throw new AuthError(
         'El inicio de sesión con Google no está configurado correctamente.',
@@ -117,87 +189,6 @@ export async function loginWithGoogle(): Promise<Session | null> {
 
     throw error;
   }
-}
-
-export function createFirebaseSession(user: FirebaseUser): Promise<Session> {
-  return createGoogleSession(user);
-}
-
-export function isFirebaseSession(
-  session: Session,
-): session is Extract<Session, { authProvider: 'firebase' }> {
-  return session.authProvider === 'firebase';
-}
-
-function saveSession(session: Session) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  } catch {
-    // storage no disponible: la sesión queda solo en memoria
-  }
-}
-
-export function getSession(): Session | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Session) : null;
-  } catch {
-    return null;
-  }
-}
-
-interface AuthFailureMessages {
-  status: number;
-  statusMessage: string;
-  fallbackMessage: string;
-}
-
-async function postSession(
-  path: string,
-  body: LoginCredentials | RegisterData,
-  messages: AuthFailureMessages,
-): Promise<Session> {
-  let response: Response;
-  try {
-    response = await postJson(path, body);
-  } catch (error) {
-    if (error instanceof ApiConnectionError) {
-      throw new AuthError('No pudimos conectar con el servidor. Probá de nuevo.');
-    }
-    throw error;
-  }
-
-  if (!response.ok) {
-    throw new AuthError(
-      response.status === messages.status
-        ? messages.statusMessage
-        : messages.fallbackMessage,
-    );
-  }
-
-  const data = (await response.json()) as Extract<
-    Session,
-    { authProvider?: 'backend' }
-  >;
-  const session: Session = { token: data.token, user: data.user };
-  saveSession(session);
-  return session;
-}
-
-export function login(credentials: LoginCredentials): Promise<Session> {
-  return postSession('/auth/login', credentials, {
-    status: 401,
-    statusMessage: 'Email o contraseña incorrectos.',
-    fallbackMessage: 'No pudimos iniciar sesión. Probá de nuevo.',
-  });
-}
-
-export function register(data: RegisterData): Promise<Session> {
-  return postSession('/auth/register', data, {
-    status: 409,
-    statusMessage: 'Ya existe una cuenta con ese email.',
-    fallbackMessage: 'No pudimos crear la cuenta. Probá de nuevo.',
-  });
 }
 
 export function logout() {

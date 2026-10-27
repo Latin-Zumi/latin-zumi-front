@@ -105,6 +105,11 @@
     margin: 0 0 16px;
   }
 
+  .auth-card .form-error--google,
+  .auth-card .form-notice {
+    margin: 14px 0 0;
+  }
+
   .auth-card form > .btn {
     width: 100%;
     min-height: 50px;
