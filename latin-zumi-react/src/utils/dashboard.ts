@@ -1,5 +1,6 @@
 import { getRateHistory } from '../services/ratesService';
-import type { Balance, Currency, WalletTransaction } from '../types';
+import type { Balance, Currency, Transaction } from '../types';
+import { toCents } from './money';
 
 export interface ActivityDay {
   date: string;
@@ -18,24 +19,7 @@ export function getCurrentRates(): CurrencyRates {
   };
 }
 
-export function calculateBalances(
-  openingBalances: Balance[],
-  transactions: WalletTransaction[],
-): Balance[] {
-  return openingBalances.map((balance) => {
-    const netTransactions = transactions.reduce((total, transaction) => {
-      if (transaction.currency !== balance.currency) return total;
-      const amount = Number(transaction.amount);
-      return total + (transaction.type === 'income' ? amount : -amount);
-    }, 0);
-
-    return {
-      ...balance,
-      amount: (Number(balance.amount) + netTransactions).toFixed(2),
-    };
-  });
-}
-
+// Las conversiones entre monedas son estimadas (cotizaciones simuladas), solo para mostrar
 export function convertAmount(
   amount: number,
   from: Currency,
@@ -43,6 +27,45 @@ export function convertAmount(
   rates: CurrencyRates,
 ): number {
   return (amount / rates[from]) * rates[to];
+}
+
+export function isIncome(transaction: Transaction): boolean {
+  return transaction.type === 'deposit' || transaction.type === 'transfer_received';
+}
+
+// El cambio de moneda mueve plata entre tus saldos: no cuenta como ingreso ni como gasto
+export function isExpense(transaction: Transaction): boolean {
+  return transaction.type === 'transfer_sent';
+}
+
+function convertTransaction(
+  transaction: Transaction,
+  preferredCurrency: Currency,
+  rates: CurrencyRates,
+): number {
+  return convertAmount(
+    toCents(transaction.amount) / 100,
+    transaction.currency,
+    preferredCurrency,
+    rates,
+  );
+}
+
+export function calculateTotalBalance(
+  balances: Balance[],
+  preferredCurrency: Currency,
+  rates: CurrencyRates,
+): number {
+  return balances.reduce(
+    (total, balance) =>
+      total + convertAmount(
+        toCents(balance.amount) / 100,
+        balance.currency,
+        preferredCurrency,
+        rates,
+      ),
+    0,
+  );
 }
 
 function localDateKey(date: Date): string {
@@ -53,7 +76,7 @@ function localDateKey(date: Date): string {
 }
 
 export function calculateSpentToday(
-  transactions: WalletTransaction[],
+  transactions: Transaction[],
   preferredCurrency: Currency,
   rates: CurrencyRates,
   now: Date,
@@ -62,23 +85,18 @@ export function calculateSpentToday(
 
   return transactions.reduce((total, transaction) => {
     if (
-      transaction.type === 'income' ||
-      localDateKey(new Date(transaction.occurredAt)) !== today
+      !isExpense(transaction) ||
+      localDateKey(new Date(transaction.created_at)) !== today
     ) {
       return total;
     }
 
-    return total + convertAmount(
-      Number(transaction.amount),
-      transaction.currency,
-      preferredCurrency,
-      rates,
-    );
+    return total + convertTransaction(transaction, preferredCurrency, rates);
   }, 0);
 }
 
 export function calculateActivityByDay(
-  transactions: WalletTransaction[],
+  transactions: Transaction[],
   preferredCurrency: Currency,
   rates: CurrencyRates,
   now: Date,
@@ -91,32 +109,27 @@ export function calculateActivityByDay(
   });
 
   for (const transaction of transactions) {
-    const dateKey = localDateKey(new Date(transaction.occurredAt));
+    const dateKey = localDateKey(new Date(transaction.created_at));
     const day = result.find((item) => item.date === dateKey);
     if (!day) continue;
 
-    const amount = convertAmount(
-      Number(transaction.amount),
-      transaction.currency,
-      preferredCurrency,
-      rates,
-    );
-    if (transaction.type === 'income') day.income += amount;
-    else day.expenses += amount;
+    const amount = convertTransaction(transaction, preferredCurrency, rates);
+    if (isIncome(transaction)) day.income += amount;
+    else if (isExpense(transaction)) day.expenses += amount;
   }
 
   return result;
 }
 
 export function getRecentTransactions(
-  transactions: WalletTransaction[],
+  transactions: Transaction[],
   limit: number,
-): WalletTransaction[] {
+): Transaction[] {
   return [...transactions]
     .sort(
       (first, second) =>
-        new Date(second.occurredAt).getTime() -
-        new Date(first.occurredAt).getTime(),
+        new Date(second.created_at).getTime() -
+        new Date(first.created_at).getTime(),
     )
     .slice(0, limit);
 }

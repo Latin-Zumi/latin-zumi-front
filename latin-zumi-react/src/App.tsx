@@ -8,8 +8,6 @@ import CompleteProfile from './pages/CompleteProfile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
-
 export default function App() {
   return (
     <Layout>
@@ -19,13 +17,9 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/completar-perfil" element={<CompleteProfile />} />
-        {USE_MOCK ? (
+        <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
-        ) : (
-          <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          </Route>
-        )}
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
