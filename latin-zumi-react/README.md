@@ -17,6 +17,21 @@ Estas solicitudes requieren el backend; no hay autenticación simulada.
 registro. La sesión se conserva en `localStorage`; cerrar sesión solo la borra
 del frontend, ya que todavía no existe una solicitud de revocación al backend.
 
+## Preparación de Firebase Authentication
+
+La configuración de la aplicación web de Firebase se define mediante las
+variables `VITE_FIREBASE_*` de `.env.local`; sus nombres están listados en
+`.env.example`. `src/services/firebase.ts` ofrece inicializadores reutilizables
+y diferidos para Firebase App y Firebase Auth, y valida la configuración al
+usarlos.
+
+Esta preparación no cambia todavía el inicio de sesión ni el registro: ambos
+siguen usando `/auth/login` y `/auth/register`. Para completar la integración,
+el backend debe verificar los Firebase ID tokens y definir cómo asociará el
+perfil de Latin Zumi (incluidos país y roles) y cómo autorizará los endpoints de
+la billetera. La interfaz actual tampoco incluye un botón de inicio de sesión
+con Google.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
