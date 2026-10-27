@@ -8,6 +8,7 @@ import Modal from '../components/ui/Modal';
 import BalanceCard from '../components/wallet/BalanceCard';
 import BalanceTable from '../components/wallet/BalanceTable';
 import DepositModal from '../components/wallet/DepositModal';
+import ExchangeModal from '../components/wallet/ExchangeModal';
 import { useAuth } from '../context/auth';
 import { useWallet } from '../context/wallet';
 import {
@@ -78,6 +79,7 @@ export default function Dashboard() {
   const wallet = useWallet();
   const [transferOpen, setTransferOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
+  const [exchangeOpen, setExchangeOpen] = useState(false);
   const [pending, setPending] = useState<PendingTransfer | null>(null);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -227,6 +229,9 @@ export default function Dashboard() {
           <Button variant="solid" size="lg" onClick={() => setDepositOpen(true)}>
             Depositar
           </Button>
+          <Button variant="solid" size="lg" onClick={() => setExchangeOpen(true)}>
+            Cambiar
+          </Button>
           <Button variant="solid" size="lg" onClick={() => setTransferOpen(true)}>
             Transferir
           </Button>
@@ -300,13 +305,16 @@ export default function Dashboard() {
               <ul className="dashboard__movement-list">
                 {recentTransactions.map((transaction) => {
                   const income = isIncome(transaction);
+                  const exchange = transaction.exchange;
+                  // El cambio de moneda no es ingreso ni gasto: va con estilo neutro
+                  const tone = exchange ? '--neutral' : income ? '--income' : '';
                   return (
                     <li className="dashboard__movement" key={transaction.id}>
                       <span
-                        className={`dashboard__movement-icon${income ? ' dashboard__movement-icon--income' : ''}`}
+                        className={`dashboard__movement-icon${tone && ` dashboard__movement-icon${tone}`}`}
                         aria-hidden="true"
                       >
-                        {income ? '↓' : '↑'}
+                        {exchange ? '⇄' : income ? '↓' : '↑'}
                       </span>
                       <span className="dashboard__movement-detail">
                         <strong>
@@ -317,10 +325,11 @@ export default function Dashboard() {
                         </span>
                       </span>
                       <span
-                        className={`dashboard__movement-amount${income ? ' dashboard__movement-amount--income' : ''}`}
+                        className={`dashboard__movement-amount${tone && ` dashboard__movement-amount${tone}`}`}
                       >
                         {income ? '+' : '−'}
                         {formatMoney(transaction.amount, transaction.currency)}
+                        {exchange && ` → +${formatMoney(exchange.to_amount, exchange.to_currency)}`}
                       </span>
                     </li>
                   );
@@ -419,6 +428,11 @@ export default function Dashboard() {
       <DepositModal
         isOpen={depositOpen}
         onClose={() => setDepositOpen(false)}
+        defaultCurrency={preferredCurrency}
+      />
+      <ExchangeModal
+        isOpen={exchangeOpen}
+        onClose={() => setExchangeOpen(false)}
         defaultCurrency={preferredCurrency}
       />
     </main>

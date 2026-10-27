@@ -10,6 +10,7 @@ export interface WalletContextValue {
   reload: () => Promise<void>;
   transfer: (data: TransferData, idempotencyKey: string) => Promise<Transaction>;
   deposit: (data: DepositData, idempotencyKey: string) => Promise<Transaction>;
+  exchange: (quoteId: string, idempotencyKey: string) => Promise<Transaction>;
 }
 
 export const WalletContext = createContext<WalletContextValue | null>(null);
