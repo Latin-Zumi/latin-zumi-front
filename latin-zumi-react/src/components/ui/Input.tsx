@@ -42,7 +42,9 @@ export const Input = ({
         aria-describedby={describedBy}
       />
       {error && (
-        <span id={errorId} className="input-error" role="alert">
+        // Sin role="alert": se valida mientras se escribe y se anunciaría en cada tecla.
+        // El error queda asociado con aria-describedby y se lee al entrar al campo.
+        <span id={errorId} className="input-error">
           {error}
         </span>
       )}

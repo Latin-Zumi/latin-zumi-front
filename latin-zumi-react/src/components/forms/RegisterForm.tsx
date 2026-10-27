@@ -52,6 +52,16 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
     validation.values.password.length,
   );
   const passwordRequirements = getPasswordRequirements(validation.values.password);
+  const passwordChecklist = [
+    {
+      label: `Mínimo ${PASSWORD_MIN_LENGTH} caracteres`,
+      met: passwordRequirements.hasMinimumLength,
+      hint: passwordLengthMessage,
+    },
+    { label: 'Incluir una mayúscula', met: passwordRequirements.hasUppercase },
+    { label: 'Incluir un carácter especial', met: passwordRequirements.hasSpecialCharacter },
+  ];
+  const metRequirements = passwordChecklist.filter((item) => item.met).length;
   const showPasswordFeedback = validation.touched.password;
 
   const updateName = (value: string) => {
@@ -156,7 +166,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
           ))}
         </select>
         {validation.errors.pais && (
-          <span id="pais-error" className="input-error" role="alert">
+          <span id="pais-error" className="input-error">
             {validation.errors.pais}
           </span>
         )}
@@ -178,34 +188,22 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         onBlur={() => validation.blurField('password')}
       />
       {showPasswordFeedback && (
-        <ul
-          id="password-feedback"
-          className="mb-4 flex flex-col gap-1 text-sm text-muted"
-          role="status"
-          aria-live="polite"
-        >
-          <li className={passwordRequirements.hasMinimumLength ? 'text-success' : undefined}>
-            <span aria-hidden="true">
-              {passwordRequirements.hasMinimumLength ? '✓' : '○'}
-            </span>
-            {' '}Mínimo {PASSWORD_MIN_LENGTH} caracteres
-            {!passwordRequirements.hasMinimumLength && passwordLengthMessage
-              ? ` (${passwordLengthMessage.toLowerCase()})`
-              : ''}
-          </li>
-          <li className={passwordRequirements.hasUppercase ? 'text-success' : undefined}>
-            <span aria-hidden="true">
-              {passwordRequirements.hasUppercase ? '✓' : '○'}
-            </span>
-            {' '}Incluir una mayúscula
-          </li>
-          <li className={passwordRequirements.hasSpecialCharacter ? 'text-success' : undefined}>
-            <span aria-hidden="true">
-              {passwordRequirements.hasSpecialCharacter ? '✓' : '○'}
-            </span>
-            {' '}Incluir un carácter especial
-          </li>
-        </ul>
+        <div id="password-feedback" className="mb-4">
+          <ul className="flex list-none flex-col gap-1 text-sm text-muted">
+            {passwordChecklist.map((item) => (
+              <li key={item.label} className={item.met ? 'text-success' : undefined}>
+                <span aria-hidden="true">{item.met ? '✓' : '○'}</span>
+                {' '}{item.label}
+                {item.hint && ` (${item.hint})`}
+                <span className="sr-only">{item.met ? ', cumplido' : ', pendiente'}</span>
+              </li>
+            ))}
+          </ul>
+          {/* Solo cambia cuando cambia la cantidad cumplida, así no se anuncia en cada tecla */}
+          <p className="sr-only" aria-live="polite">
+            {metRequirements} de {passwordChecklist.length} requisitos cumplidos
+          </p>
+        </div>
       )}
 
       {formError && (

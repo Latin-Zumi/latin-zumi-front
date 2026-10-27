@@ -37,6 +37,8 @@ export default function CompleteProfileForm({ askNombre, onSuccess }: CompletePr
         if (!errors[field]) errors[field] = issue.message;
       }
       setFieldErrors(errors);
+      const firstInvalid = (['nombre', 'pais'] as const).find((field) => errors[field]);
+      if (firstInvalid) document.getElementById(firstInvalid)?.focus();
       return;
     }
 
@@ -92,7 +94,7 @@ export default function CompleteProfileForm({ askNombre, onSuccess }: CompletePr
           ))}
         </select>
         {fieldErrors.pais && (
-          <span id="pais-error" className="input-error" role="alert">
+          <span id="pais-error" className="input-error">
             {fieldErrors.pais}
           </span>
         )}
