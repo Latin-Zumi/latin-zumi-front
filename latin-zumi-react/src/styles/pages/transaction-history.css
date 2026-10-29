@@ -20,7 +20,7 @@
   }
 
   .transaction-history__back-link {
-    @apply text-sm font-semibold text-primary underline-offset-4 hover:underline;
+    @apply text-sm font-semibold text-primary-strong underline-offset-4 hover:underline;
   }
 
   .transaction-history__filters {

@@ -19,6 +19,14 @@
     }
   }
 
+  .btn-outline {
+    @apply border-2 border-foreground bg-transparent text-foreground;
+
+    &:hover:not(:disabled) {
+      @apply bg-foreground/10;
+    }
+  }
+
   .btn-link {
     @apply inline-flex items-center justify-center rounded-md font-medium no-underline;
   }
@@ -36,14 +44,14 @@
   }
 
   .btn-light {
-    @apply bg-white text-primary shadow-sm;
+    @apply bg-white text-ink shadow-sm;
 
     &:is(a), &:is(a):hover {
-      @apply text-primary;
+      @apply text-ink;
     }
 
     &:hover:not(:disabled) {
-      @apply bg-primary-foreground/90;
+      @apply bg-white/90;
     }
   }
 

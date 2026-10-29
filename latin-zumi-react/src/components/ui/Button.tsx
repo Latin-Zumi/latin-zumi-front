@@ -13,6 +13,8 @@ type SolidButtonProps = ButtonBaseProps & {
   disabled?: boolean;
   loading?: boolean;
   form?: string;
+  // Botón secundario: solo borde, sin relleno
+  outline?: boolean;
 };
 
 type LinkButtonProps = ButtonBaseProps & {
@@ -27,14 +29,14 @@ export const Button: React.FC<ButtonProps> = (props) => {
   const { size = 'md', children } = props;
 
   if (props.variant === 'solid') {
-    const { type = 'button', onClick, disabled, loading, form } = props;
+    const { type = 'button', onClick, disabled, loading, form, outline } = props;
     const isDisabled = disabled || loading;
 
     return (
       <button
         type={type}
         aria-busy={loading || undefined}
-        className={`btn btn-${size}`}
+        className={`btn btn-${size}${outline ? ' btn-outline' : ''}`}
         form={form}
         onClick={onClick}
         disabled={isDisabled}

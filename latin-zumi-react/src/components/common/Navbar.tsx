@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/auth";
 import Button from "../ui/Button";
+import ThemeToggle from "./ThemeToggle";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `navbar__link${isActive ? " is-active" : ""}`;
@@ -88,6 +89,8 @@ export function Navbar() {
           </p>
         )}
       </div>
+
+      <ThemeToggle />
     </div>
   );
 }
