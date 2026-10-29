@@ -13,6 +13,9 @@ export default mergeConfig(
       // Los tests no necesitan los estilos; así corren más rápido
       css: false,
       restoreMocks: true,
+      // Deshace vi.stubEnv y vi.stubGlobal (fetch) después de cada test
+      unstubEnvs: true,
+      unstubGlobals: true,
       coverage: {
         provider: 'v8',
         include: ['src/**/*.{ts,tsx}'],
