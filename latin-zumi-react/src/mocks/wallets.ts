@@ -23,7 +23,7 @@ const CURRENCIES: Currency[] = ['ARS', 'COP', 'USD', 'EUR'];
 const QUOTE_TTL_MS = 60_000;
 
 interface MockWallet {
-  wallet_id: number;
+  wallet_id: string;
   balances: Record<Currency, number>; // en centavos
   transactions: Transaction[]; // del más nuevo al más viejo
   processed: Record<string, OperationResult>; // por Idempotency-Key
@@ -81,7 +81,7 @@ function createTransaction(
 }
 
 // Toda billetera nueva arranca con saldo de prueba y algunos movimientos para ver los gráficos
-function createSeedWallet(walletId: number): MockWallet {
+function createSeedWallet(walletId: string): MockWallet {
   const transactions: Transaction[] = [
     createTransaction('deposit', 'ARS', 8_320_000, 'Depósito inicial', { created_at: daysAgo(4, 10) }),
     createTransaction('deposit', 'COP', 143_400_000, 'Depósito inicial', { created_at: daysAgo(4, 11) }),
@@ -111,13 +111,14 @@ function createSeedWallet(walletId: number): MockWallet {
 
 function getWallet(wallets: Record<string, MockWallet>, email: string): MockWallet {
   const key = email.toLowerCase();
-  wallets[key] ??= createSeedWallet(findMockUser(key)?.id ?? Object.keys(wallets).length + 1);
+  wallets[key] ??= createSeedWallet(crypto.randomUUID());
   return wallets[key];
 }
 
 function toBalances(wallet: MockWallet): Balance[] {
   return CURRENCIES.map((currency) => ({
-    wallet_id: wallet.wallet_id,
+    account_id: `${wallet.wallet_id}-${currency}`,
+    wallet_id: String(wallet.wallet_id), // las billeteras mock viejas guardaban un número
     currency,
     amount: fromCents(wallet.balances[currency]),
   }));

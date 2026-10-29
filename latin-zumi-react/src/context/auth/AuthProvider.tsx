@@ -1,8 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { AuthContext } from './AuthContext';
 import {
   getSession,
-  logout as clearSession,
+  logout as logoutService,
   saveSession,
   type AuthUser,
   type Session,
@@ -22,10 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(updated);
   };
 
-  const logout = async () => {
-    clearSession();
+  // Estable para no volver a disparar efectos que dependen de ella
+  const logout = useCallback(async () => {
+    await logoutService();
     setSession(null);
-  };
+  }, []);
 
   return (
     <AuthContext.Provider

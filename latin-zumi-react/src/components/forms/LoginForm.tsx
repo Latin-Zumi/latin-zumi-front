@@ -8,6 +8,7 @@ import {
 import { sanitizeLoginEmail } from '../../utils/login';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import { GOOGLE_AUTH_ENABLED } from '../../config/features';
 import GoogleSignInButton from './GoogleSignInButton';
 import { loginSchema } from './schemas';
 
@@ -131,11 +132,13 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         Ingresar
       </Button>
 
-      <GoogleSignInButton
-        disabled={loading}
-        onBusyChange={setGoogleLoading}
-        onSuccess={onSuccess}
-      />
+      {GOOGLE_AUTH_ENABLED && (
+        <GoogleSignInButton
+          disabled={loading}
+          onBusyChange={setGoogleLoading}
+          onSuccess={onSuccess}
+        />
+      )}
     </form>
   );
 }

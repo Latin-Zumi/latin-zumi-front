@@ -14,7 +14,7 @@ export const MOCK_PASSWORD = 'LatinZumi1!';
 
 const SEED_USERS: AuthUser[] = [
   {
-    id: 1,
+    id: 'mock-user-1',
     nombre: 'Valentina',
     email: 'valentina@latinzumi.test',
     pais: 'Argentina',
@@ -23,7 +23,7 @@ const SEED_USERS: AuthUser[] = [
     estado: 'activo',
   },
   {
-    id: 2,
+    id: 'mock-user-2',
     nombre: 'Mateo',
     email: 'mateo@latinzumi.test',
     pais: 'Colombia',
@@ -64,9 +64,8 @@ function readPasswords(): Record<string, string> {
   return { ...seed, ...readJson<string>(PASSWORDS_KEY) };
 }
 
-function nextId(users: Record<string, AuthUser>): number {
-  return Math.max(0, ...Object.values(users).map((user) => user.id)) + 1;
-}
+// El backend usa UUID para los ids
+const nextId = () => crypto.randomUUID();
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
@@ -93,7 +92,7 @@ export function registerMockUser(data: {
   if (users[email]) return null;
 
   const user: AuthUser = {
-    id: nextId(users),
+    id: nextId(),
     nombre: data.nombre,
     email,
     pais: data.pais,
@@ -118,7 +117,7 @@ export function findOrCreateMockGoogleUser(data: {
   if (existing) return existing;
 
   const user: AuthUser = {
-    id: nextId(users),
+    id: nextId(),
     nombre: data.nombre,
     email,
     pais: null,
