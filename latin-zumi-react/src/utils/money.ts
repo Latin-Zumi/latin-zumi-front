@@ -23,10 +23,26 @@ export function fromCents(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
-// Acepta "1500", "1500.5" o "1500,50". Devuelve los centavos, o null si no es un monto válido.
+export const INVALID_AMOUNT_MESSAGE =
+  'Ingresá un monto mayor a cero, con hasta dos decimales. Por ejemplo: 1.250,50';
+
+// "1.250" o "1.250.000,50": punto de miles y coma decimal, como se escribe en Argentina y Colombia
+const AMOUNT_WITH_THOUSANDS = /^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$/;
+// "1250", "1250,5" o "1250.5": sin miles, con coma o punto decimal
+const PLAIN_AMOUNT = /^\d+(?:[.,]\d{1,2})?$/;
+
+// Pasa lo que escribió el usuario al formato del backend ("1250.50"), o null si no se entiende.
+// El formato de Estados Unidos ("1,250.50") no se acepta: mezclado con el nuestro cambiaría el monto.
+function normalizeAmountInput(value: string): string | null {
+  if (AMOUNT_WITH_THOUSANDS.test(value)) return value.replace(/\./g, '').replace(',', '.');
+  if (PLAIN_AMOUNT.test(value)) return value.replace(',', '.');
+  return null;
+}
+
+// Devuelve los centavos, o null si no es un monto válido
 export function parseAmountInput(value: string): number | null {
-  const normalized = value.trim().replace(',', '.');
-  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return null;
+  const normalized = normalizeAmountInput(value.trim());
+  if (normalized === null) return null;
   const cents = toCents(normalized);
   return cents > 0 && Number.isSafeInteger(cents) ? cents : null;
 }

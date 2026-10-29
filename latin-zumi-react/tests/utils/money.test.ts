@@ -36,6 +36,26 @@ describe('parseAmountInput', () => {
     expect(parseAmountInput('1500,50')).toBe(150050);
   });
 
+  it('acepta el punto de miles, como se escribe en Argentina y Colombia', () => {
+    expect(parseAmountInput('1.250')).toBe(125000);
+    expect(parseAmountInput('1.250,5')).toBe(125050);
+    expect(parseAmountInput('1.250.000')).toBe(125000000);
+    expect(parseAmountInput(' 1.250.000,50 ')).toBe(125000050);
+  });
+
+  it('con un solo punto y hasta dos cifras después, el punto es decimal', () => {
+    expect(parseAmountInput('10.5')).toBe(1050);
+    expect(parseAmountInput('1.25')).toBe(125);
+  });
+
+  it('rechaza puntos de miles mal puestos y el formato de Estados Unidos', () => {
+    expect(parseAmountInput('12.50,5')).toBeNull();
+    expect(parseAmountInput('1.25.000')).toBeNull();
+    expect(parseAmountInput('1250.000')).toBeNull();
+    expect(parseAmountInput('1,250.50')).toBeNull();
+    expect(parseAmountInput('1,250,000')).toBeNull();
+  });
+
   it('rechaza montos vacíos, en cero, negativos o con más de dos decimales', () => {
     expect(parseAmountInput('')).toBeNull();
     expect(parseAmountInput('0')).toBeNull();

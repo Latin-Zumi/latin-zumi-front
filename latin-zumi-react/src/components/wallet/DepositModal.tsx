@@ -7,6 +7,7 @@ import {
   CURRENCY_NAMES,
   formatMoney,
   fromCents,
+  INVALID_AMOUNT_MESSAGE,
   parseAmountInput,
 } from '../../utils/money';
 import Button from '../ui/Button';
@@ -22,7 +23,7 @@ const depositSchema = z.object({
     .string()
     .trim()
     .min(1, 'Ingresá un monto.')
-    .refine((value) => parseAmountInput(value) !== null, 'Ingresá un monto mayor a cero, con hasta dos decimales.'),
+    .refine((value) => parseAmountInput(value) !== null, INVALID_AMOUNT_MESSAGE),
 });
 
 // Datos validados que esperan confirmación. La clave se reutiliza si hay que reintentar.
