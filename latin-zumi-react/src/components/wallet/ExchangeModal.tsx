@@ -8,12 +8,15 @@ import {
   formatExchangeRate,
   formatMoney,
   fromCents,
+  getAvailableAmount,
+  getInsufficientFundsError,
   parseAmountInput,
   toCents,
 } from '../../utils/money';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Modal from '../ui/Modal';
+import AvailableBalance from './AvailableBalance';
 
 const CURRENCIES: Currency[] = ['ARS', 'COP', 'USD', 'EUR'];
 
@@ -50,6 +53,9 @@ interface ExchangeModalProps {
 export default function ExchangeModal({ isOpen, onClose, defaultCurrency }: ExchangeModalProps) {
   const wallet = useWallet();
   const [pending, setPending] = useState<PendingExchange | null>(null);
+  // Moneda de origen y monto controlados para mostrar el disponible y avisar mientras se escribe
+  const [fromCurrency, setFromCurrency] = useState<Currency | null>(null);
+  const [amount, setAmount] = useState('');
   const [expiredByServer, setExpiredByServer] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [formError, setFormError] = useState('');
@@ -68,11 +74,18 @@ export default function ExchangeModal({ isOpen, onClose, defaultCurrency }: Exch
     ? Math.max(0, Math.ceil((new Date(pending.quote.expires_at).getTime() - now) / 1000))
     : 0;
   const isExpired = expiredByServer || (pending !== null && secondsLeft === 0);
+  const selectedFrom = fromCurrency ?? defaultCurrency;
+  const amountError = getInsufficientFundsError(
+    amount,
+    getAvailableAmount(wallet.balances, selectedFrom),
+  );
 
   function close() {
     if (submittingRef.current) return;
     setPending(null);
     setFormError('');
+    setFromCurrency(null);
+    setAmount('');
     onClose();
   }
 
@@ -156,7 +169,7 @@ export default function ExchangeModal({ isOpen, onClose, defaultCurrency }: Exch
       footer={
         pending ? (
           <>
-            <Button variant="solid" onClick={() => setPending(null)} disabled={isSubmitting}>
+            <Button variant="solid" outline onClick={() => setPending(null)} disabled={isSubmitting}>
               Volver
             </Button>
             {isExpired ? (
@@ -171,7 +184,7 @@ export default function ExchangeModal({ isOpen, onClose, defaultCurrency }: Exch
           </>
         ) : (
           <>
-            <Button variant="solid" onClick={close}>
+            <Button variant="solid" outline onClick={close}>
               Cancelar
             </Button>
             <Button variant="solid" type="submit" form="dashboard-exchange-form" loading={isSubmitting}>
@@ -216,7 +229,11 @@ export default function ExchangeModal({ isOpen, onClose, defaultCurrency }: Exch
           id="exchange-from"
           className="dashboard__select"
           name="from"
-          defaultValue={defaultCurrency}
+          value={selectedFrom}
+          onChange={(event) => {
+            const currency = CURRENCIES.find((item) => item === event.target.value);
+            if (currency) setFromCurrency(currency);
+          }}
           required
         >
           {CURRENCIES.map((currency) => (
@@ -225,6 +242,12 @@ export default function ExchangeModal({ isOpen, onClose, defaultCurrency }: Exch
             </option>
           ))}
         </select>
+        <AvailableBalance
+          id="exchange-available"
+          currency={selectedFrom}
+          balances={wallet.balances}
+          onUseAll={setAmount}
+        />
         <label className="dashboard__field-label" htmlFor="exchange-to">
           Moneda que recibís
         </label>
@@ -248,6 +271,10 @@ export default function ExchangeModal({ isOpen, onClose, defaultCurrency }: Exch
           inputMode="decimal"
           autoComplete="off"
           placeholder="0,00"
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
+          error={amountError}
+          aria-describedby="exchange-available"
           required
         />
         {!pending && formError && <p className="form-error" role="alert">{formError}</p>}

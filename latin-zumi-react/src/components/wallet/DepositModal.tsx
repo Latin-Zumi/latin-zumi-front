@@ -105,7 +105,7 @@ export default function DepositModal({ isOpen, onClose, defaultCurrency }: Depos
       footer={
         pending ? (
           <>
-            <Button variant="solid" onClick={() => setPending(null)} disabled={isSubmitting}>
+            <Button variant="solid" outline onClick={() => setPending(null)} disabled={isSubmitting}>
               Volver
             </Button>
             <Button variant="solid" onClick={() => void confirmDeposit()} loading={isSubmitting}>
@@ -114,7 +114,7 @@ export default function DepositModal({ isOpen, onClose, defaultCurrency }: Depos
           </>
         ) : (
           <>
-            <Button variant="solid" onClick={close}>
+            <Button variant="solid" outline onClick={close}>
               Cancelar
             </Button>
             <Button variant="solid" type="submit" form="dashboard-deposit-form">
