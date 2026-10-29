@@ -17,5 +17,6 @@
 @import "./pages/about.css";
 @import "./pages/auth.css";
 @import "./wallet/rate-card.css";
+@import "./wallet/available-balance.css";
 @import "./charts/sparkline.css";
 @import "./charts/rate-chart.css";
