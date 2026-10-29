@@ -3,6 +3,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { GOOGLE_AUTH_ENABLED } from './config/features';
 import Layout from './components/common/Layout';
 import Dashboard from './pages/Dashboard';
+import TransactionHistory from './pages/TransactionHistory';
 import Home from './pages/Home';
 import About from './pages/About';
 import CompleteProfile from './pages/CompleteProfile';
@@ -23,6 +24,7 @@ export default function App() {
         )}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/historial" element={<TransactionHistory />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

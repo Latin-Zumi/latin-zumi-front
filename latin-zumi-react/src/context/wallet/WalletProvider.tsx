@@ -41,7 +41,9 @@ async function fetchWallet(email: string): Promise<WalletData> {
       email,
       balances: [],
       transactions: [],
-      sessionExpired: error instanceof WalletSessionExpiredError,
+      sessionExpired:
+        error instanceof WalletSessionExpiredError ||
+        (error instanceof TransactionError && error.code === 'UNAUTHORIZED'),
       error:
         error instanceof WalletError || error instanceof TransactionError
           ? error.message

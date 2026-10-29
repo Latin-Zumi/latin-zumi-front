@@ -1,4 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import ActivityChart from '../components/ActivityChart';
 import { EmptyState, ErrorState, LoadingState } from '../components/states';
@@ -32,7 +33,12 @@ import {
   parseAmountInput,
   toCents,
 } from '../utils/money';
-import type { Currency, Transaction } from '../types';
+import type { Currency } from '../types';
+import {
+  formatTransactionDate,
+  getTransactionDescription,
+  TRANSACTION_TYPE_LABELS,
+} from '../utils/transactions';
 
 const CURRENCIES: Currency[] = ['ARS', 'COP', 'USD', 'EUR'];
 
@@ -60,20 +66,6 @@ interface PendingTransfer {
 function isCurrency(value: string): value is Currency {
   return CURRENCIES.some((currency) => currency === value);
 }
-
-function formatTransactionDate(value: string): string {
-  return new Intl.DateTimeFormat('es-AR', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value));
-}
-
-const TYPE_LABELS: Record<Transaction['type'], string> = {
-  deposit: 'Depósito',
-  transfer_sent: 'Transferencia enviada',
-  transfer_received: 'Transferencia recibida',
-  exchange: 'Cambio de moneda',
-};
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -266,6 +258,27 @@ export default function Dashboard() {
         )}
       </section>
 
+      <section className="dashboard__history-card" aria-labelledby="history-card-title">
+        <div className="dashboard__history-copy">
+          <span className="dashboard__history-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M3.5 12a8.5 8.5 0 1 0 2.49-6.01L3.5 8.5" />
+              <path d="M3.5 4.5v4h4M12 7.5V12l3 2" />
+            </svg>
+          </span>
+          <div className="dashboard__history-text">
+            <h2 id="history-card-title">Historial de movimientos</h2>
+            <p>Consultá tus ingresos, envíos y operaciones en un solo lugar.</p>
+          </div>
+        </div>
+        <Link className="btn btn-lg dashboard__history-link" to="/historial">
+          Ver historial completo
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14m-6-6 6 6-6 6" />
+          </svg>
+        </Link>
+      </section>
+
       <div className="dashboard__content">
         <section
           className="panel dashboard__analytics"
@@ -305,7 +318,11 @@ export default function Dashboard() {
             <div className="dashboard__section-heading">
               <h2 id="recent-title">Actividad reciente</h2>
             </div>
-            {recentTransactions.length === 0 ? (
+            {!TRANSACTIONS_ENABLED ? (
+              <p className="dashboard__muted">
+                El historial estará disponible cuando el backend habilite los movimientos.
+              </p>
+            ) : recentTransactions.length === 0 ? (
               <EmptyState
                 title="Todavía no hay movimientos"
                 description="Tus depósitos y transferencias aparecerán acá."
@@ -328,10 +345,10 @@ export default function Dashboard() {
                       </span>
                       <span className="dashboard__movement-detail">
                         <strong>
-                          {transaction.counterparty?.nombre ?? transaction.description}
+                          {getTransactionDescription(transaction)}
                         </strong>
                         <span>
-                          {TYPE_LABELS[transaction.type]} · {formatTransactionDate(transaction.created_at)}
+                          {TRANSACTION_TYPE_LABELS[transaction.type]} · {formatTransactionDate(transaction.created_at)}
                         </span>
                       </span>
                       <span

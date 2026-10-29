@@ -46,6 +46,48 @@
     }
   }
 
+  .dashboard__history-card {
+    @apply flex flex-col gap-5 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6;
+  }
+
+  .dashboard__history-copy {
+    @apply flex min-w-0 items-center gap-4;
+  }
+
+  .dashboard__history-icon {
+    @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary;
+
+    & svg {
+      @apply h-6 w-6;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+    }
+  }
+
+  .dashboard__history-text {
+    & h2 {
+      @apply mb-1 text-lg font-semibold text-foreground;
+    }
+
+    & p {
+      @apply mb-0 text-sm text-muted;
+    }
+  }
+
+  .dashboard__history-link {
+    @apply w-full shrink-0 sm:w-auto;
+
+    & svg {
+      @apply h-5 w-5;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2;
+    }
+  }
+
   .dashboard__content {
     @apply grid gap-6;
   }
