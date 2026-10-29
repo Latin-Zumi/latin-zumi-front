@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import ActivityChart from '../components/ActivityChart';
+import AvailableBalance from '../components/wallet/AvailableBalance';
 import { EmptyState, ErrorState, LoadingState } from '../components/states';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -26,6 +27,8 @@ import {
   CURRENCY_NAMES,
   formatMoney,
   fromCents,
+  getAvailableAmount,
+  getInsufficientFundsError,
   parseAmountInput,
   toCents,
 } from '../utils/money';
@@ -71,6 +74,9 @@ export default function Dashboard() {
   const [depositOpen, setDepositOpen] = useState(false);
   const [exchangeOpen, setExchangeOpen] = useState(false);
   const [pending, setPending] = useState<PendingTransfer | null>(null);
+  // Moneda y monto controlados para mostrar el disponible y avisar mientras se escribe
+  const [transferCurrency, setTransferCurrency] = useState<Currency | null>(null);
+  const [transferAmount, setTransferAmount] = useState('');
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   // El estado tarda un render en deshabilitar el botón; el ref frena el doble clic al instante
@@ -102,6 +108,11 @@ export default function Dashboard() {
 
   const { balances, transactions } = wallet;
   const preferredCurrency = user.moneda_preferida;
+  const selectedTransferCurrency = transferCurrency ?? preferredCurrency;
+  const transferAmountError = getInsufficientFundsError(
+    transferAmount,
+    getAvailableAmount(balances, selectedTransferCurrency),
+  );
   const rates = getCurrentRates();
   // El saldo grande es el de la moneda del usuario; el resto se nombra en una frase
   const mainBalance =
@@ -126,6 +137,8 @@ export default function Dashboard() {
     setTransferOpen(false);
     setPending(null);
     setFormError('');
+    setTransferCurrency(null);
+    setTransferAmount('');
   }
 
   async function reviewTransfer(event: FormEvent<HTMLFormElement>) {
@@ -192,6 +205,8 @@ export default function Dashboard() {
       await wallet.transfer(pending.data, pending.idempotencyKey);
       setTransferOpen(false);
       setPending(null);
+      setTransferCurrency(null);
+      setTransferAmount('');
     } catch (error) {
       setFormError(
         error instanceof TransactionError
@@ -330,7 +345,7 @@ export default function Dashboard() {
         footer={
           pending ? (
             <>
-              <Button variant="solid" onClick={() => setPending(null)} disabled={isSubmitting}>
+              <Button variant="solid" outline onClick={() => setPending(null)} disabled={isSubmitting}>
                 Volver
               </Button>
               <Button variant="solid" onClick={() => void confirmTransfer()} loading={isSubmitting}>
@@ -339,7 +354,7 @@ export default function Dashboard() {
             </>
           ) : (
             <>
-              <Button variant="solid" onClick={closeTransfer} disabled={isSubmitting}>
+              <Button variant="solid" outline onClick={closeTransfer} disabled={isSubmitting}>
                 Cancelar
               </Button>
               <Button
@@ -379,7 +394,10 @@ export default function Dashboard() {
               id="transfer-currency"
               className="dashboard__select"
               name="currency"
-              defaultValue={preferredCurrency}
+              value={selectedTransferCurrency}
+              onChange={(event) => {
+                if (isCurrency(event.target.value)) setTransferCurrency(event.target.value);
+              }}
               required
             >
               {CURRENCIES.map((currency) => (
@@ -388,6 +406,12 @@ export default function Dashboard() {
                 </option>
               ))}
             </select>
+            <AvailableBalance
+              id="transfer-available"
+              currency={selectedTransferCurrency}
+              balances={balances}
+              onUseAll={setTransferAmount}
+            />
             <Input
               label="Monto"
               name="amount"
@@ -395,6 +419,10 @@ export default function Dashboard() {
               inputMode="decimal"
               autoComplete="off"
               placeholder="0,00"
+              value={transferAmount}
+              onChange={(event) => setTransferAmount(event.target.value)}
+              error={transferAmountError}
+              aria-describedby="transfer-available"
               required
             />
             <Input

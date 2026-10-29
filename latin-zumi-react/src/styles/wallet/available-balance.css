@@ -1,0 +1,18 @@
+@layer components {
+  .available-balance {
+    @apply -mt-1 mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted;
+
+    & strong {
+      @apply font-semibold text-foreground;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .available-balance__use-all {
+    @apply min-h-11 rounded-full bg-transparent px-3 py-1 text-sm font-semibold text-primary-strong underline underline-offset-4 cursor-pointer;
+
+    &:hover {
+      @apply bg-primary/10;
+    }
+  }
+}

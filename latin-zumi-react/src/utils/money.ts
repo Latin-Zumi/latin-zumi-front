@@ -1,4 +1,4 @@
-import type { Currency } from '../types';
+import type { Balance, Currency } from '../types';
 
 export const CURRENCY_NAMES: Record<Currency, string> = {
   ARS: 'Peso argentino',
@@ -40,4 +40,16 @@ export function formatExchangeRate(from: Currency, to: Currency, rate: number): 
     maximumFractionDigits: value < 10 ? 4 : 2,
   }).format(value);
   return `1 ${base} = ${formatted} ${quote}`;
+}
+
+export function getAvailableAmount(balances: Balance[], currency: Currency): string {
+  return balances.find((balance) => balance.currency === currency)?.amount ?? '0';
+}
+
+// Avisa mientras se escribe si el monto supera lo disponible. Un monto mal escrito lo valida el formulario al enviar.
+export function getInsufficientFundsError(value: string, available: string): string | undefined {
+  const cents = parseAmountInput(value);
+  return cents !== null && cents > toCents(available)
+    ? 'No tenés saldo suficiente en esa moneda.'
+    : undefined;
 }
