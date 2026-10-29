@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatExchangeRate,
+  formatMoney,
   fromCents,
   getAvailableAmount,
   getInsufficientFundsError,
@@ -7,6 +9,25 @@ import {
   toCents,
 } from '../../src/utils/money';
 import type { Balance } from '../../src/types';
+import { normalizeSpaces } from '../helpers/factories';
+
+describe('formatMoney', () => {
+  it('usa el formato argentino con el símbolo de cada moneda', () => {
+    expect(normalizeSpaces(formatMoney('118200', 'ARS'))).toBe('$ 118.200,00');
+    expect(normalizeSpaces(formatMoney(1070.5, 'USD'))).toBe('US$ 1.070,50');
+  });
+});
+
+describe('formatExchangeRate', () => {
+  it('muestra la cotización en el sentido en que la cifra es mayor a 1', () => {
+    expect(formatExchangeRate('USD', 'ARS', 980)).toBe('1 USD = 980,00 ARS');
+    expect(formatExchangeRate('ARS', 'USD', 1 / 980)).toBe('1 USD = 980,00 ARS');
+  });
+
+  it('usa cuatro decimales cuando la cifra es chica', () => {
+    expect(formatExchangeRate('USD', 'EUR', 1.0638)).toBe('1 USD = 1,0638 EUR');
+  });
+});
 
 describe('parseAmountInput', () => {
   it('acepta enteros y decimales con punto o coma', () => {
