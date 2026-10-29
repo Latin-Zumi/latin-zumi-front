@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import About from './pages/About';
 import CompleteProfile from './pages/CompleteProfile';
 import Login from './pages/Login';
+import PasswordRecovery from './pages/PasswordRecovery';
 import Register from './pages/Register';
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/recuperar-contrasena" element={<PasswordRecovery />} />
         <Route path="/register" element={<Register />} />
         {/* Solo los usuarios de Google llegan sin país; el registro normal ya lo pide */}
         {GOOGLE_AUTH_ENABLED && (

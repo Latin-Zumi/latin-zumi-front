@@ -32,6 +32,14 @@ perfil de Latin Zumi (incluidos país y roles) y cómo autorizará los endpoints
 la billetera. La interfaz actual tampoco incluye un botón de inicio de sesión
 con Google.
 
+El inicio de sesión y las contraseñas de las cuentas de Latin Zumi son
+administrados por el backend. Firebase se usa únicamente como proveedor temporal
+de identidad para el flujo opcional de Google; no administra las contraseñas del
+login habitual. El backend todavía no documenta un flujo ni un endpoint de
+restablecimiento de contraseña. Por eso, `/recuperar-contrasena` valida el email
+y explica que no se envió un correo hasta que exista un proceso seguro acordado
+con el backend. No se debe usar Firebase Password Reset para estas cuentas.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
