@@ -9,6 +9,7 @@ import BalanceCard from '../components/wallet/BalanceCard';
 import BalanceTable from '../components/wallet/BalanceTable';
 import DepositModal from '../components/wallet/DepositModal';
 import ExchangeModal from '../components/wallet/ExchangeModal';
+import { TRANSACTIONS_ENABLED } from '../config/features';
 import { useAuth } from '../context/auth';
 import { useWallet } from '../context/wallet';
 import {
@@ -225,17 +226,20 @@ export default function Dashboard() {
             {formatMoney(totalBalance, preferredCurrency)}
           </p>
         </div>
-        <div className="home-hero__actions">
-          <Button variant="solid" size="lg" onClick={() => setDepositOpen(true)}>
-            Depositar
-          </Button>
-          <Button variant="solid" size="lg" onClick={() => setExchangeOpen(true)}>
-            Cambiar
-          </Button>
-          <Button variant="solid" size="lg" onClick={() => setTransferOpen(true)}>
-            Transferir
-          </Button>
-        </div>
+        {/* Las operaciones solo existen en el mock hasta que el backend tenga sus endpoints */}
+        {TRANSACTIONS_ENABLED && (
+          <div className="home-hero__actions">
+            <Button variant="solid" size="lg" onClick={() => setDepositOpen(true)}>
+              Depositar
+            </Button>
+            <Button variant="solid" size="lg" onClick={() => setExchangeOpen(true)}>
+              Cambiar
+            </Button>
+            <Button variant="solid" size="lg" onClick={() => setTransferOpen(true)}>
+              Transferir
+            </Button>
+          </div>
+        )}
       </section>
 
       <section className="dashboard__balances" aria-labelledby="balances-title">
@@ -245,15 +249,21 @@ export default function Dashboard() {
             <h2 id="balances-title">Saldos disponibles</h2>
           </div>
         </div>
-        <div className="dashboard__balance-grid">
-          {balances.map((balance) => (
-            <BalanceCard key={balance.currency} balance={balance} />
-          ))}
-        </div>
-        <details className="dashboard__balances-table">
-          <summary>Ver saldos como tabla</summary>
-          <BalanceTable balances={balances} />
-        </details>
+        {balances.length === 0 ? (
+          <EmptyState title="Sin balances" variant="no-balance" />
+        ) : (
+          <>
+            <div className="dashboard__balance-grid">
+              {balances.map((balance) => (
+                <BalanceCard key={balance.account_id} balance={balance} />
+              ))}
+            </div>
+            <details className="dashboard__balances-table">
+              <summary>Ver saldos como tabla</summary>
+              <BalanceTable balances={balances} />
+            </details>
+          </>
+        )}
       </section>
 
       <div className="dashboard__content">

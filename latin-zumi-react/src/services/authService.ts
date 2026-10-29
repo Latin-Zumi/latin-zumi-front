@@ -1,4 +1,4 @@
-import { ApiConnectionError, postJson } from './apiClient';
+import { ApiConnectionError, apiRequest, postJson } from './apiClient';
 import { FirebaseError } from 'firebase/app';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { FirebaseConfigurationError, getFirebaseAuth } from './firebase';
@@ -22,7 +22,7 @@ export interface RegisterData extends LoginCredentials {
 }
 
 export interface AuthUser {
-  id: number;
+  id: string; // UUID
   nombre: string;
   email: string;
   pais: string | null; // null hasta que un usuario de Google completa su perfil
@@ -84,10 +84,28 @@ async function requestSession(
 
   if (!response.ok) throw errorFor(response.status);
 
-  const data = (await response.json()) as Session;
+  // Solo se guarda una sesión con la forma que espera el resto de la app
+  const data = (await response.json()) as Partial<Session>;
+  if (
+    !data.token ||
+    !data.user ||
+    typeof data.user.id !== 'string' ||
+    !Array.isArray(data.user.roles)
+  ) {
+    throw new AuthError('Respuesta inválida del servidor.');
+  }
+
   const session: Session = { token: data.token, user: data.user };
   saveSession(session);
   return session;
+}
+
+// La lógica sale del status HTTP: el body de los errores no es uniforme (el 429 manda { error })
+function authErrorFor(status: number, messages: Record<number, string>, fallback: string): AuthError {
+  if (messages[status]) return new AuthError(messages[status]);
+  if (status === 429) return new AuthError('Demasiados intentos. Esperá unos minutos.');
+  if (status >= 500) return new AuthError('No pudimos conectar con el servidor. Probá de nuevo.');
+  return new AuthError(fallback);
 }
 
 const delay = (ms: number) =>
@@ -103,16 +121,23 @@ export async function login(credentials: LoginCredentials): Promise<Session> {
   if (USE_MOCK) {
     await delay(400); // simula la latencia de la API
     const user = loginMockUser(credentials.email, credentials.password);
-    if (!user) throw new AuthError('Email o contraseña incorrectos');
+    if (!user) throw new AuthError('Email o contraseña incorrectos.');
     return startMockSession(user);
   }
 
-  return requestSession('/auth/login', credentials, (status) =>
-    new AuthError(
-      status === 401
-        ? 'Email o contraseña incorrectos'
-        : 'No pudimos iniciar sesión. Probá de nuevo.',
-    ),
+  // El backend recibe el email (o username) en "identifier"
+  return requestSession(
+    '/auth/login',
+    { identifier: credentials.email, password: credentials.password },
+    (status) =>
+      authErrorFor(
+        status,
+        {
+          400: 'Revisá los datos ingresados.',
+          401: 'Email o contraseña incorrectos.',
+        },
+        'No pudimos iniciar sesión. Probá de nuevo.',
+      ),
   );
 }
 
@@ -125,10 +150,13 @@ export async function register(data: RegisterData): Promise<Session> {
   }
 
   return requestSession('/auth/register', data, (status) =>
-    new AuthError(
-      status === 409
-        ? 'Ya existe una cuenta con ese email.'
-        : 'No pudimos crear la cuenta. Probá de nuevo.',
+    authErrorFor(
+      status,
+      {
+        400: 'Revisá los datos ingresados.',
+        409: 'Ya existe una cuenta con ese email.',
+      },
+      'No pudimos crear la cuenta. Probá de nuevo.',
     ),
   );
 }
@@ -215,10 +243,28 @@ export async function loginWithGoogle(): Promise<Session | null> {
   }
 }
 
-export function logout() {
+export function clearSession() {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
     // nada que limpiar
+  }
+}
+
+// Revoca el token en el backend. La sesión local se borra siempre, aunque falle la red
+// o el token ya esté vencido (401).
+export async function logout(): Promise<void> {
+  const session = getSession();
+  try {
+    if (session && !USE_MOCK) {
+      await apiRequest('/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.token}` },
+      });
+    }
+  } catch {
+    // best effort
+  } finally {
+    clearSession();
   }
 }

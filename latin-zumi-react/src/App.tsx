@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import { GOOGLE_AUTH_ENABLED } from './config/features';
 import Layout from './components/common/Layout';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
@@ -16,7 +17,10 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/completar-perfil" element={<CompleteProfile />} />
+        {/* Solo los usuarios de Google llegan sin país; el registro normal ya lo pide */}
+        {GOOGLE_AUTH_ENABLED && (
+          <Route path="/completar-perfil" element={<CompleteProfile />} />
+        )}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>
