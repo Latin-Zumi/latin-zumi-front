@@ -29,6 +29,7 @@ import {
   fromCents,
   getAvailableAmount,
   getInsufficientFundsError,
+  INVALID_AMOUNT_MESSAGE,
   parseAmountInput,
   toCents,
 } from '../utils/money';
@@ -48,7 +49,7 @@ const transferSchema = z.object({
     .string()
     .trim()
     .min(1, 'Ingresá un monto.')
-    .refine((value) => parseAmountInput(value) !== null, 'Ingresá un monto mayor a cero, con hasta dos decimales.'),
+    .refine((value) => parseAmountInput(value) !== null, INVALID_AMOUNT_MESSAGE),
   recipient_email: z
     .string()
     .trim()

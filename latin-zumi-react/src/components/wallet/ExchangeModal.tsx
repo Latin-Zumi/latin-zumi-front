@@ -10,6 +10,7 @@ import {
   fromCents,
   getAvailableAmount,
   getInsufficientFundsError,
+  INVALID_AMOUNT_MESSAGE,
   parseAmountInput,
   toCents,
 } from '../../utils/money';
@@ -28,7 +29,7 @@ const exchangeSchema = z
       .string()
       .trim()
       .min(1, 'Ingresá un monto.')
-      .refine((value) => parseAmountInput(value) !== null, 'Ingresá un monto mayor a cero, con hasta dos decimales.'),
+      .refine((value) => parseAmountInput(value) !== null, INVALID_AMOUNT_MESSAGE),
   })
   .refine((data) => data.from !== data.to, 'Elegí dos monedas distintas.');
 
