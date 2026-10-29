@@ -8,10 +8,15 @@ export const CURRENCY_NAMES: Record<Currency, string> = {
 };
 
 export function formatMoney(amount: string | number, currency: Currency): string {
+  const value = Number(amount);
+  // El peso colombiano se muestra sin decimales y redondearía "1.250.000,50" a "1.250.001".
+  // Si el monto tiene centavos se muestran siempre; si no, cada moneda usa su formato.
+  const hasCents = Math.round(value * 100) % 100 !== 0;
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency,
-  }).format(Number(amount));
+    ...(hasCents && { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+  }).format(value);
 }
 // Los montos se suman y comparan en centavos enteros para evitar errores de redondeo
 // (0.1 + 0.2 = 0.30000000000000004). Solo se pasan a string para mostrar o enviar.

@@ -16,6 +16,19 @@ describe('formatMoney', () => {
     expect(normalizeSpaces(formatMoney('118200', 'ARS'))).toBe('$ 118.200,00');
     expect(normalizeSpaces(formatMoney(1070.5, 'USD'))).toBe('US$ 1.070,50');
   });
+
+  it('muestra el peso colombiano sin decimales, salvo que tenga centavos', () => {
+    expect(normalizeSpaces(formatMoney('1392000', 'COP'))).toBe('COP 1.392.000');
+    expect(normalizeSpaces(formatMoney('1392000.00', 'COP'))).toBe('COP 1.392.000');
+    // Antes se redondeaba a "COP 1.250.001"
+    expect(normalizeSpaces(formatMoney('1250000.50', 'COP'))).toBe('COP 1.250.000,50');
+    expect(normalizeSpaces(formatMoney('0.05', 'COP'))).toBe('COP 0,05');
+  });
+
+  it('las demás monedas siguen mostrando siempre dos decimales', () => {
+    expect(normalizeSpaces(formatMoney('118200', 'ARS'))).toBe('$ 118.200,00');
+    expect(normalizeSpaces(formatMoney('-42.5', 'EUR'))).toBe('-EUR 42,50');
+  });
 });
 
 describe('formatExchangeRate', () => {
