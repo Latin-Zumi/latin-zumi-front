@@ -13,6 +13,7 @@ import {
 } from '../../utils/registration';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import { GOOGLE_AUTH_ENABLED } from '../../config/features';
 import GoogleSignInButton from './GoogleSignInButton';
 import { PAISES, registerSchema } from './schemas';
 
@@ -54,7 +55,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
   const passwordRequirements = getPasswordRequirements(validation.values.password);
   const passwordChecklist = [
     {
-      label: `Mínimo ${PASSWORD_MIN_LENGTH} caracteres`,
+      label: `Entre ${PASSWORD_MIN_LENGTH} y ${PASSWORD_MAX_LENGTH} caracteres`,
       met: passwordRequirements.hasMinimumLength,
       hint: passwordLengthMessage,
     },
@@ -216,11 +217,13 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         Crear cuenta
       </Button>
 
-      <GoogleSignInButton
-        disabled={loading}
-        onBusyChange={setGoogleLoading}
-        onSuccess={onSuccess}
-      />
+      {GOOGLE_AUTH_ENABLED && (
+        <GoogleSignInButton
+          disabled={loading}
+          onBusyChange={setGoogleLoading}
+          onSuccess={onSuccess}
+        />
+      )}
     </form>
   );
 }

@@ -10,7 +10,12 @@ import {
   type DepositData,
   type TransferData,
 } from '../../services/transactionService';
-import { WalletError, getBalances } from '../../services/walletService';
+import { TRANSACTIONS_ENABLED } from '../../config/features';
+import {
+  WalletError,
+  WalletSessionExpiredError,
+  getBalances,
+} from '../../services/walletService';
 import type { Balance, OperationResult, Transaction } from '../../types';
 
 const RECENT_LIMIT = 20;
@@ -20,20 +25,25 @@ interface WalletData {
   balances: Balance[];
   transactions: Transaction[];
   error: string;
+  sessionExpired: boolean;
 }
 
 async function fetchWallet(email: string): Promise<WalletData> {
   try {
+    // Sin backend de movimientos todavía: con la API real solo se piden los saldos
     const [balances, page] = await Promise.all([
       getBalances(),
-      getTransactions({ limit: RECENT_LIMIT }),
+      TRANSACTIONS_ENABLED ? getTransactions({ limit: RECENT_LIMIT }) : null,
     ]);
-    return { email, balances, transactions: page.items, error: '' };
+    return { email, balances, transactions: page?.items ?? [], error: '', sessionExpired: false };
   } catch (error) {
     return {
       email,
       balances: [],
       transactions: [],
+      sessionExpired:
+        error instanceof WalletSessionExpiredError ||
+        (error instanceof TransactionError && error.code === 'UNAUTHORIZED'),
       error:
         error instanceof WalletError || error instanceof TransactionError
           ? error.message
@@ -43,7 +53,7 @@ async function fetchWallet(email: string): Promise<WalletData> {
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const email = user?.email ?? null;
   const [data, setData] = useState<WalletData | null>(null);
 
@@ -51,18 +61,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (!email) return;
     let ignore = false; // descarta la respuesta si el usuario cambió mientras cargaba
     void fetchWallet(email).then((next) => {
-      if (!ignore) setData(next);
+      if (ignore) return;
+      setData(next);
+      // Token vencido o revocado: sin sesión, ProtectedRoute manda a /login
+      if (next.sessionExpired) void logout();
     });
     return () => {
       ignore = true;
     };
-  }, [email]);
+  }, [email, logout]);
 
   // Si cambió el usuario, los datos anteriores no se muestran mientras cargan los nuevos
   const current = data && data.email === email ? data : null;
 
   const reload = async () => {
-    if (email) setData(await fetchWallet(email));
+    if (!email) return;
+    const next = await fetchWallet(email);
+    setData(next);
+    if (next.sessionExpired) await logout();
   };
 
   // Cada operación devuelve los saldos actualizados y el movimiento creado

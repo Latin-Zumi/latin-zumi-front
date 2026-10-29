@@ -1,11 +1,22 @@
 import { getMockBalances } from '../mocks/wallets';
 import { getSession } from './authService';
 import { ApiConnectionError, apiRequest } from './apiClient';
-import type { Balance } from '../types';
+import type { Balance, Currency } from '../types';
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 export class WalletError extends Error {}
+
+// 401: el token venció o fue revocado. Hay que cerrar la sesión.
+export class WalletSessionExpiredError extends WalletError {}
+
+// Cuenta tal como la devuelve GET /accounts
+interface AccountResponse {
+  id: string;
+  wallet_id: string;
+  currency: Currency;
+  balance: string;
+}
 
 const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -13,7 +24,7 @@ const delay = (ms: number) =>
 export async function getBalances(): Promise<Balance[]> {
   const session = getSession();
   if (!session) {
-    throw new WalletError('Necesitás iniciar sesión.');
+    throw new WalletSessionExpiredError('Necesitás iniciar sesión.');
   }
 
   if (USE_MOCK) {
@@ -25,7 +36,7 @@ export async function getBalances(): Promise<Balance[]> {
 
   let response: Response;
   try {
-    response = await apiRequest('/wallet/balances', {
+    response = await apiRequest('/accounts', {
       headers: { Authorization: `Bearer ${session.token}` },
     });
   } catch (error) {
@@ -35,13 +46,23 @@ export async function getBalances(): Promise<Balance[]> {
     throw error;
   }
 
+  if (response.status === 401) {
+    throw new WalletSessionExpiredError('Tu sesión expiró. Volvé a iniciar sesión.');
+  }
+  // 403: usuario con contraseña vieja. La sesión sigue siendo válida, no se borra.
+  if (response.status === 403) {
+    throw new WalletError('Tenés que cambiar tu contraseña antes de ver tus balances.');
+  }
   if (!response.ok) {
-    throw new WalletError(
-      response.status === 401
-        ? 'Tu sesión expiró. Volvé a iniciar sesión.'
-        : 'No pudimos cargar tus balances. Probá de nuevo.',
-    );
+    throw new WalletError('No pudimos cargar tus balances. Probá de nuevo.');
   }
 
-  return (await response.json()) as Balance[];
+  // Los saldos en "0" también se muestran
+  const { data } = (await response.json()) as { data: AccountResponse[] };
+  return data.map((account) => ({
+    account_id: account.id,
+    wallet_id: account.wallet_id,
+    currency: account.currency,
+    amount: account.balance,
+  }));
 }

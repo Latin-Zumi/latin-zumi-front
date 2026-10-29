@@ -1,9 +1,11 @@
 export type Currency = 'ARS' | 'COP' | 'USD' | 'EUR';
 
+// Una cuenta de GET /accounts, con los nombres que usa el front
 export interface Balance {
-  wallet_id: number;
+  account_id: string; // accounts[].id (UUID)
+  wallet_id: string; // accounts[].wallet_id (UUID)
   currency: Currency;
-  amount: string; // NUMERIC(20,8) llega como string desde Postgres
+  amount: string; // accounts[].balance: NUMERIC llega como string, por ejemplo "1200.50000000"
 }
 
 // Contrato acordado en docs/specs/2026-10-27-Transacciones-contrato-y-mock.md

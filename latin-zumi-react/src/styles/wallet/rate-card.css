@@ -16,7 +16,7 @@
   }
 
   .currency-badge {
-    @apply rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary;
+    @apply rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary-strong;
   }
 
   .rate-card__name {

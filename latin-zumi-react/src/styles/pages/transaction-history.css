@@ -1,0 +1,120 @@
+@layer components {
+  .transaction-history {
+    @apply flex flex-col gap-6;
+  }
+
+  .transaction-history__header {
+    @apply flex flex-wrap items-end justify-between gap-4;
+
+    & h1 {
+      @apply mb-2 text-3xl font-bold tracking-tight;
+    }
+  }
+
+  .transaction-history__intro {
+    @apply mb-0 text-sm text-muted;
+  }
+
+  .transaction-history__demo-notice {
+    @apply mb-0 rounded-sm border border-border bg-background px-4 py-3 text-sm text-muted;
+  }
+
+  .transaction-history__back-link {
+    @apply text-sm font-semibold text-primary-strong underline-offset-4 hover:underline;
+  }
+
+  .transaction-history__filters {
+    @apply grid grid-cols-1 gap-4 rounded-lg border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-4;
+
+    & label {
+      @apply flex flex-col gap-2 text-sm font-medium;
+    }
+
+    & select,
+    & input {
+      @apply min-w-0 rounded-sm border border-border bg-field px-3 py-2 text-foreground;
+    }
+  }
+
+  .transaction-history__list {
+    @apply m-0 flex list-none flex-col gap-3 p-0;
+  }
+
+  .transaction-history__item {
+    @apply grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-surface p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto] sm:gap-4;
+  }
+
+  .transaction-history__icon {
+    @apply row-span-2 flex h-10 w-10 items-center justify-center rounded-full bg-background font-bold text-danger sm:row-span-1;
+  }
+
+  .transaction-history__icon--income {
+    @apply text-success;
+  }
+
+  .transaction-history__icon--neutral {
+    @apply text-foreground;
+  }
+
+  .transaction-history__details {
+    @apply flex min-w-0 flex-col gap-1;
+
+    & strong {
+      @apply overflow-hidden text-sm text-foreground text-ellipsis whitespace-nowrap;
+    }
+
+    & span {
+      @apply text-xs text-muted;
+    }
+  }
+
+  .transaction-history__value {
+    @apply flex flex-col items-end gap-1 text-right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .transaction-history__amount {
+    @apply text-sm font-semibold text-danger;
+  }
+
+  .transaction-history__amount--income {
+    @apply text-success;
+  }
+
+  .transaction-history__amount--neutral {
+    @apply text-foreground;
+  }
+
+  .transaction-history__exchange {
+    @apply text-xs text-muted;
+  }
+
+  .transaction-history__status {
+    @apply col-start-2 text-xs font-medium sm:col-start-auto;
+  }
+
+  .transaction-history__status--completed {
+    @apply text-success;
+  }
+
+  .transaction-history__status--pending {
+    @apply text-secondary;
+  }
+
+  .transaction-history__status--failed {
+    @apply text-danger;
+  }
+
+  .transaction-history__empty,
+  .transaction-history__notice {
+    @apply rounded-lg border border-border bg-surface p-6;
+
+    & h2 {
+      @apply mb-2 text-lg font-semibold;
+    }
+
+    & p {
+      @apply mb-0 text-sm text-muted;
+    }
+  }
+}

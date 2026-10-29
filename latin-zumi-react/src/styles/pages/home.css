@@ -6,8 +6,8 @@
   .home-hero {
     @apply relative flex flex-col gap-6 overflow-hidden rounded-lg p-6 text-white shadow-lg sm:p-10 md:flex-row md:items-end md:justify-between;
     background:
-      radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--color-secondary) 35%, transparent), transparent 40%),
-      linear-gradient(135deg, var(--color-ink) 0%, var(--color-primary-hover) 60%, var(--color-primary) 100%);
+      radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--color-primary) 30%, transparent), transparent 40%),
+      linear-gradient(160deg, var(--color-feature-from) 0%, var(--color-feature-to) 100%);
 
     & h1 {
       @apply mt-2 text-3xl leading-tight font-extrabold tracking-tight text-white sm:text-4xl;
@@ -39,7 +39,7 @@
   }
 
   .hero-action__icon {
-    @apply flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg text-primary;
+    @apply flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg text-ink;
   }
 
   .market {
@@ -107,7 +107,7 @@
     @apply text-sm;
 
     & summary {
-      @apply cursor-pointer font-medium text-primary;
+      @apply cursor-pointer font-medium text-primary-strong;
     }
 
     & table {

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   EMAIL_MAX_LENGTH,
+  LOGIN_PASSWORD_MAX_LENGTH,
   NAME_MAX_LENGTH,
   PASSWORD_MAX_LENGTH,
   PASSWORD_REQUIREMENTS_MESSAGE,
@@ -49,7 +50,7 @@ export const loginSchema = z.object({
     .string()
     .min(1, 'Ingresá tu contraseña')
     .max(
-      PASSWORD_MAX_LENGTH,
-      `La contraseña no puede superar los ${PASSWORD_MAX_LENGTH} caracteres`,
+      LOGIN_PASSWORD_MAX_LENGTH,
+      `La contraseña no puede superar los ${LOGIN_PASSWORD_MAX_LENGTH} caracteres`,
     ),
 });

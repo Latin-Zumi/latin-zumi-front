@@ -1,14 +1,14 @@
 import { useRef, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import ActivityChart from '../components/ActivityChart';
 import { EmptyState, ErrorState, LoadingState } from '../components/states';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
-import BalanceCard from '../components/wallet/BalanceCard';
-import BalanceTable from '../components/wallet/BalanceTable';
 import DepositModal from '../components/wallet/DepositModal';
 import ExchangeModal from '../components/wallet/ExchangeModal';
+import { TRANSACTIONS_ENABLED } from '../config/features';
 import { useAuth } from '../context/auth';
 import { useWallet } from '../context/wallet';
 import {
@@ -18,8 +18,6 @@ import {
 } from '../services/transactionService';
 import {
   calculateActivityByDay,
-  calculateSpentToday,
-  calculateTotalBalance,
   getCurrentRates,
   getRecentTransactions,
   isIncome,
@@ -31,7 +29,13 @@ import {
   parseAmountInput,
   toCents,
 } from '../utils/money';
-import type { Currency, Transaction } from '../types';
+import type { Currency } from '../types';
+import {
+  formatTransactionTime,
+  getTransactionDescription,
+  groupTransactionsByDay,
+  TRANSACTION_TYPE_LABELS,
+} from '../utils/transactions';
 
 const CURRENCIES: Currency[] = ['ARS', 'COP', 'USD', 'EUR'];
 
@@ -59,20 +63,6 @@ interface PendingTransfer {
 function isCurrency(value: string): value is Currency {
   return CURRENCIES.some((currency) => currency === value);
 }
-
-function formatTransactionDate(value: string): string {
-  return new Intl.DateTimeFormat('es-AR', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value));
-}
-
-const TYPE_LABELS: Record<Transaction['type'], string> = {
-  deposit: 'Depósito',
-  transfer_sent: 'Transferencia enviada',
-  transfer_received: 'Transferencia recibida',
-  exchange: 'Cambio de moneda',
-};
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -113,21 +103,23 @@ export default function Dashboard() {
   const { balances, transactions } = wallet;
   const preferredCurrency = user.moneda_preferida;
   const rates = getCurrentRates();
-  const totalBalance = calculateTotalBalance(balances, preferredCurrency, rates);
-  const spentToday = calculateSpentToday(
-    transactions,
-    preferredCurrency,
-    rates,
-    new Date(),
-  );
+  // El saldo grande es el de la moneda del usuario; el resto se nombra en una frase
+  const mainBalance =
+    balances.find((balance) => balance.currency === preferredCurrency) ?? balances[0];
+  const otherBalances = balances.filter((balance) => balance !== mainBalance);
   const activityByDay = calculateActivityByDay(
     transactions,
     preferredCurrency,
     rates,
     new Date(),
-    5,
+    7,
   );
-  const recentTransactions = getRecentTransactions(transactions, 5);
+  const weekIncome = activityByDay.reduce((total, day) => total + day.income, 0);
+  const weekExpenses = activityByDay.reduce((total, day) => total + day.expenses, 0);
+  const recentGroups = groupTransactionsByDay(
+    getRecentTransactions(transactions, 5),
+    new Date(),
+  );
 
   function closeTransfer() {
     if (isSubmitting) return;
@@ -214,129 +206,120 @@ export default function Dashboard() {
 
   return (
     <main className="dashboard">
-      <section className="home-hero dashboard-hero" aria-labelledby="dashboard-title">
-        <div className="home-hero__text">
-          <p className="home-hero__eyebrow">Resumen de tu billetera</p>
-          <h1 id="dashboard-title">¡Hola, {user.nombre}!</h1>
-          <p className="home-hero__lead">
-            Saldo total estimado en {CURRENCY_NAMES[preferredCurrency]}
-          </p>
-          <p className="dashboard-hero__balance">
-            {formatMoney(totalBalance, preferredCurrency)}
-          </p>
+      <section className="dashboard-summary" aria-labelledby="dashboard-title">
+        <div className="dashboard-summary__text">
+          <h1 id="dashboard-title" className="dashboard-summary__greeting">
+            Hola, {user.nombre}
+          </h1>
+          {mainBalance ? (
+            <>
+              <p className="dashboard-summary__amount">
+                {formatMoney(mainBalance.amount, mainBalance.currency)}
+              </p>
+              <p className="dashboard-summary__label">
+                Saldo disponible en {CURRENCY_NAMES[mainBalance.currency].toLowerCase()}
+              </p>
+              {otherBalances.length > 0 && (
+                <p className="dashboard-summary__others">
+                  También tenés{' '}
+                  {otherBalances.map((balance, index) => (
+                    <span key={balance.account_id}>
+                      <strong>{formatMoney(balance.amount, balance.currency)}</strong>
+                      {index < otherBalances.length - 2
+                        ? ', '
+                        : index === otherBalances.length - 2
+                          ? ' y '
+                          : '.'}
+                    </span>
+                  ))}
+                </p>
+              )}
+            </>
+          ) : (
+            <EmptyState title="Sin balances" variant="no-balance" />
+          )}
         </div>
-        <div className="home-hero__actions">
-          <Button variant="solid" size="lg" onClick={() => setDepositOpen(true)}>
-            Depositar
-          </Button>
-          <Button variant="solid" size="lg" onClick={() => setExchangeOpen(true)}>
-            Cambiar
-          </Button>
-          <Button variant="solid" size="lg" onClick={() => setTransferOpen(true)}>
-            Transferir
-          </Button>
-        </div>
-      </section>
-
-      <section className="dashboard__balances" aria-labelledby="balances-title">
-        <div className="dashboard__section-heading">
-          <div>
-            <p className="dashboard__eyebrow">Tus monedas</p>
-            <h2 id="balances-title">Saldos disponibles</h2>
+        {/* Las operaciones solo existen en el mock hasta que el backend tenga sus endpoints */}
+        {TRANSACTIONS_ENABLED && (
+          <div className="dashboard-summary__actions">
+            <Button variant="solid" size="lg" onClick={() => setDepositOpen(true)}>
+              Depositar
+            </Button>
+            <Button variant="solid" size="lg" outline onClick={() => setTransferOpen(true)}>
+              Transferir
+            </Button>
+            <Button variant="solid" size="lg" outline onClick={() => setExchangeOpen(true)}>
+              Cambiar
+            </Button>
           </div>
-        </div>
-        <div className="dashboard__balance-grid">
-          {balances.map((balance) => (
-            <BalanceCard key={balance.currency} balance={balance} />
-          ))}
-        </div>
-        <details className="dashboard__balances-table">
-          <summary>Ver saldos como tabla</summary>
-          <BalanceTable balances={balances} />
-        </details>
+        )}
       </section>
 
       <div className="dashboard__content">
-        <section
-          className="panel dashboard__analytics"
-          aria-labelledby="activity-title"
-        >
+        <section className="dashboard__movements" aria-labelledby="movements-title">
           <header className="dashboard__section-heading">
-            <div>
-              <p className="dashboard__eyebrow">Últimos cinco días</p>
-              <h2 id="activity-title">Actividad de tu dinero</h2>
-            </div>
-            <div className="dashboard__spent">
-              <span>Enviado hoy</span>
-              <strong>{formatMoney(spentToday, preferredCurrency)}</strong>
-            </div>
+            <h2 id="movements-title">Movimientos</h2>
+            <Link className="dashboard__see-all" to="/historial">
+              Ver todos
+            </Link>
           </header>
-          <ActivityChart data={activityByDay} currency={preferredCurrency} />
+          {!TRANSACTIONS_ENABLED ? (
+            <p className="dashboard__muted">
+              El historial estará disponible cuando el backend habilite los movimientos.
+            </p>
+          ) : recentGroups.length === 0 ? (
+            <EmptyState
+              title="Todavía no hay movimientos"
+              description="Tus depósitos y transferencias aparecerán acá."
+              variant="no-transactions"
+            />
+          ) : (
+            recentGroups.map((group) => (
+              <section className="dashboard__day" key={group.key} aria-label={group.label}>
+                <h3 className="dashboard__day-label" aria-hidden="true">{group.label}</h3>
+                <ul className="dashboard__movement-list">
+                  {group.transactions.map((transaction) => {
+                    const income = isIncome(transaction);
+                    const exchange = transaction.exchange;
+                    // El cambio de moneda no es ingreso ni gasto: va con estilo neutro
+                    const tone = exchange ? '--neutral' : income ? '--income' : '';
+                    return (
+                      <li className="dashboard__movement" key={transaction.id}>
+                        <span className="dashboard__movement-detail">
+                          <strong>{getTransactionDescription(transaction)}</strong>
+                          <span>
+                            {formatTransactionTime(transaction.created_at)} · {TRANSACTION_TYPE_LABELS[transaction.type]}
+                          </span>
+                        </span>
+                        <span
+                          className={`dashboard__movement-amount${tone && ` dashboard__movement-amount${tone}`}`}
+                        >
+                          {income ? '+' : '−'}
+                          {formatMoney(transaction.amount, transaction.currency)}
+                          {exchange && ` → +${formatMoney(exchange.to_amount, exchange.to_currency)}`}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))
+          )}
         </section>
 
-        <aside
-          className="panel dashboard__account"
-          aria-label="Resumen y actividad reciente"
-        >
-          <section className="dashboard__profile" aria-labelledby="profile-title">
-            <p className="dashboard__eyebrow">Tu cuenta</p>
-            <h2 id="profile-title">{user.nombre}</h2>
-            <p className="dashboard__email">{user.email}</p>
-            <span className="dashboard__currency-tag">
-              {CURRENCY_NAMES[preferredCurrency]}
-            </span>
-            <p className="dashboard__account-total">
-              {formatMoney(totalBalance, preferredCurrency)}
-            </p>
-            <span className="dashboard__muted">Saldo total unificado</span>
-          </section>
-
-          <section className="dashboard__recent" aria-labelledby="recent-title">
-            <div className="dashboard__section-heading">
-              <h2 id="recent-title">Actividad reciente</h2>
+        <aside className="feature-surface dashboard__week" aria-labelledby="week-title">
+          <h2 id="week-title">Esta semana</h2>
+          <ActivityChart data={activityByDay} currency={preferredCurrency} />
+          <dl className="dashboard__week-totals">
+            <div>
+              <dt>Entró</dt>
+              <dd>{formatMoney(weekIncome, preferredCurrency)}</dd>
             </div>
-            {recentTransactions.length === 0 ? (
-              <EmptyState
-                title="Todavía no hay movimientos"
-                description="Tus depósitos y transferencias aparecerán acá."
-                variant="no-transactions"
-              />
-            ) : (
-              <ul className="dashboard__movement-list">
-                {recentTransactions.map((transaction) => {
-                  const income = isIncome(transaction);
-                  const exchange = transaction.exchange;
-                  // El cambio de moneda no es ingreso ni gasto: va con estilo neutro
-                  const tone = exchange ? '--neutral' : income ? '--income' : '';
-                  return (
-                    <li className="dashboard__movement" key={transaction.id}>
-                      <span
-                        className={`dashboard__movement-icon${tone && ` dashboard__movement-icon${tone}`}`}
-                        aria-hidden="true"
-                      >
-                        {exchange ? '⇄' : income ? '↓' : '↑'}
-                      </span>
-                      <span className="dashboard__movement-detail">
-                        <strong>
-                          {transaction.counterparty?.nombre ?? transaction.description}
-                        </strong>
-                        <span>
-                          {TYPE_LABELS[transaction.type]} · {formatTransactionDate(transaction.created_at)}
-                        </span>
-                      </span>
-                      <span
-                        className={`dashboard__movement-amount${tone && ` dashboard__movement-amount${tone}`}`}
-                      >
-                        {income ? '+' : '−'}
-                        {formatMoney(transaction.amount, transaction.currency)}
-                        {exchange && ` → +${formatMoney(exchange.to_amount, exchange.to_currency)}`}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
+            <div>
+              <dt>Salió</dt>
+              <dd>{formatMoney(weekExpenses, preferredCurrency)}</dd>
+            </div>
+          </dl>
         </aside>
       </div>
 
