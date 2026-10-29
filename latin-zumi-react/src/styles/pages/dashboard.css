@@ -1,24 +1,58 @@
 @layer components {
   .dashboard {
-    @apply flex flex-col gap-8;
+    @apply flex flex-col gap-10;
   }
 
-  .dashboard-hero {
-    & h1 {
-      @apply mb-0;
+  .dashboard-summary {
+    @apply flex flex-wrap items-end justify-between gap-7;
+  }
+
+  .dashboard-summary__text {
+    @apply flex min-w-0 flex-col gap-1;
+  }
+
+  .dashboard-summary__greeting {
+    @apply m-0 text-base font-normal text-muted;
+    font-family: var(--font-sans);
+  }
+
+  .dashboard-summary__amount {
+    @apply m-0 text-5xl font-extrabold text-foreground sm:text-7xl md:text-8xl;
+    font-family: var(--font-display);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-summary__label {
+    @apply m-0 mt-2 text-sm text-muted;
+  }
+
+  .dashboard-summary__others {
+    @apply m-0 mt-1 text-base text-muted;
+
+    & strong {
+      @apply font-semibold text-foreground;
     }
   }
 
-  .dashboard-hero__balance {
-    @apply mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl;
-    font-variant-numeric: tabular-nums;
+  .dashboard-summary__actions {
+    @apply flex flex-wrap gap-2.5;
+
+    & .btn {
+      @apply rounded-md;
+      min-height: 52px;
+    }
   }
 
   .dashboard__section-heading {
-    @apply flex flex-wrap items-end justify-between gap-4;
+    @apply flex flex-wrap items-baseline justify-between gap-4;
 
     & h2 {
-      @apply text-xl;
+      @apply m-0 text-2xl font-bold;
+      font-family: var(--font-display);
+      letter-spacing: -0.02em;
     }
   }
 
@@ -26,91 +60,52 @@
     @apply mb-1 text-xs font-semibold tracking-widest text-muted uppercase;
   }
 
-  .dashboard-hero .dashboard__eyebrow {
-    @apply text-white/70;
-  }
-
-  .dashboard__balance-grid {
-    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4;
-  }
-
-  .dashboard__balances-table {
-    @apply mt-4;
-
-    & summary {
-      @apply cursor-pointer text-sm font-medium text-primary;
-    }
-
-    & > div {
-      @apply mt-3;
-    }
-  }
-
-  .dashboard__history-card {
-    @apply flex flex-col gap-5 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6;
-  }
-
-  .dashboard__history-copy {
-    @apply flex min-w-0 items-center gap-4;
-  }
-
-  .dashboard__history-icon {
-    @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary;
-
-    & svg {
-      @apply h-6 w-6;
-      stroke: currentColor;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 1.8;
-    }
-  }
-
-  .dashboard__history-text {
-    & h2 {
-      @apply mb-1 text-lg font-semibold text-foreground;
-    }
-
-    & p {
-      @apply mb-0 text-sm text-muted;
-    }
-  }
-
-  .dashboard__history-link {
-    @apply w-full shrink-0 sm:w-auto;
-
-    & svg {
-      @apply h-5 w-5;
-      stroke: currentColor;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 2;
-    }
+  .dashboard__see-all {
+    @apply inline-flex min-h-11 items-center text-sm font-semibold;
   }
 
   .dashboard__content {
-    @apply grid gap-6;
+    @apply grid gap-10;
   }
 
-  .dashboard__analytics,
-  .dashboard__account {
-    @apply min-w-0;
+  .dashboard__movements {
+    @apply flex min-w-0 flex-col;
   }
 
-  .dashboard__analytics {
-    @apply flex flex-col gap-5;
+  .dashboard__day {
+    @apply mt-4;
   }
 
-  .dashboard__spent {
-    @apply flex flex-col gap-1 text-right;
+  .dashboard__day-label {
+    @apply m-0 mb-1 text-xs font-semibold text-muted;
+    font-family: var(--font-sans);
+  }
 
-    & span {
+  .dashboard__week {
+    @apply flex min-w-0 flex-col gap-5 self-start rounded-lg p-6 text-foreground shadow-lg;
+    background: linear-gradient(160deg, var(--color-feature-from) 0%, var(--color-feature-to) 100%);
+
+    & h2 {
+      @apply m-0 text-xl font-bold;
+      font-family: var(--font-display);
+    }
+  }
+
+  .dashboard__week-totals {
+    @apply m-0 flex justify-between gap-3 border-t border-border pt-4;
+
+    & dt {
       @apply text-sm text-muted;
     }
 
-    & strong {
-      @apply text-2xl font-bold text-foreground;
+    & dd {
+      @apply m-0 mt-1 text-xl font-bold;
+      font-family: var(--font-display);
       font-variant-numeric: tabular-nums;
+    }
+
+    & div:last-child {
+      @apply text-right;
     }
   }
 
@@ -163,7 +158,7 @@
     @apply text-sm;
 
     & summary {
-      @apply cursor-pointer font-medium text-primary;
+      @apply cursor-pointer font-medium text-primary-strong;
     }
 
     & table {
@@ -181,38 +176,8 @@
     }
   }
 
-  .dashboard__account {
-    @apply flex flex-col gap-6;
-  }
-
-  .dashboard__profile {
-    @apply border-b border-border pb-5;
-
-    & h2 {
-      @apply mb-1 text-xl;
-    }
-  }
-
-  .dashboard__email,
   .dashboard__muted {
     @apply text-sm text-muted;
-  }
-
-  .dashboard__currency-tag {
-    @apply mt-4 inline-flex rounded-full bg-background px-3 py-1 text-xs font-semibold text-foreground;
-  }
-
-  .dashboard__account-total {
-    @apply mt-3 text-2xl font-bold text-foreground;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .dashboard__recent {
-    @apply flex flex-col gap-4;
-  }
-
-  .dashboard__recent .dashboard__section-heading h2 {
-    @apply text-lg;
   }
 
   .dashboard__movement-list {
@@ -220,35 +185,24 @@
   }
 
   .dashboard__movement {
-    @apply flex min-w-0 items-center gap-3 py-3;
-  }
-
-  .dashboard__movement-icon {
-    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-background font-bold text-secondary;
-  }
-
-  .dashboard__movement-icon--income {
-    @apply text-success;
-  }
-
-  .dashboard__movement-icon--neutral {
-    @apply text-foreground;
+    @apply flex min-w-0 items-center gap-4 py-3.5;
   }
 
   .dashboard__movement-detail {
     @apply flex min-w-0 flex-1 flex-col gap-1;
 
     & strong {
-      @apply overflow-hidden text-sm text-foreground text-ellipsis whitespace-nowrap;
+      @apply overflow-hidden text-base font-semibold text-foreground text-ellipsis whitespace-nowrap;
     }
 
     & > span {
-      @apply text-xs text-muted;
+      @apply text-sm text-muted;
     }
   }
 
   .dashboard__movement-amount {
-    @apply shrink-0 text-right text-sm font-semibold text-danger;
+    @apply shrink-0 text-right text-base font-bold text-foreground;
+    font-family: var(--font-display);
     font-variant-numeric: tabular-nums;
   }
 
@@ -289,7 +243,7 @@
     }
 
     .dashboard__movement-amount {
-      @apply ml-12 w-full text-left;
+      @apply w-full text-left;
     }
   }
 }

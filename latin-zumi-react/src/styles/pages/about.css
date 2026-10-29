@@ -33,7 +33,7 @@
   }
 
   .team-card__email {
-    @apply mt-1 rounded-full border border-border px-3 py-1 text-xs font-medium text-primary no-underline break-all;
+    @apply mt-1 rounded-full border border-border px-3 py-1 text-xs font-medium text-primary-strong no-underline break-all;
 
     &:hover {
       @apply bg-background;

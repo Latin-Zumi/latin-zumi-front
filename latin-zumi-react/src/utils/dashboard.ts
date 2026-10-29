@@ -1,5 +1,5 @@
 import { getRateHistory } from '../services/ratesService';
-import type { Balance, Currency, Transaction } from '../types';
+import type { Currency, Transaction } from '../types';
 import { toCents } from './money';
 
 export interface ActivityDay {
@@ -51,48 +51,11 @@ function convertTransaction(
   );
 }
 
-export function calculateTotalBalance(
-  balances: Balance[],
-  preferredCurrency: Currency,
-  rates: CurrencyRates,
-): number {
-  return balances.reduce(
-    (total, balance) =>
-      total + convertAmount(
-        toCents(balance.amount) / 100,
-        balance.currency,
-        preferredCurrency,
-        rates,
-      ),
-    0,
-  );
-}
-
 function localDateKey(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-}
-
-export function calculateSpentToday(
-  transactions: Transaction[],
-  preferredCurrency: Currency,
-  rates: CurrencyRates,
-  now: Date,
-): number {
-  const today = localDateKey(now);
-
-  return transactions.reduce((total, transaction) => {
-    if (
-      !isExpense(transaction) ||
-      localDateKey(new Date(transaction.created_at)) !== today
-    ) {
-      return total;
-    }
-
-    return total + convertTransaction(transaction, preferredCurrency, rates);
-  }, 0);
 }
 
 export function calculateActivityByDay(

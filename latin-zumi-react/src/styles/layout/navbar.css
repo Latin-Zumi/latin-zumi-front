@@ -41,7 +41,7 @@
     }
 
     &.is-active {
-      @apply bg-primary/10 font-semibold text-primary;
+      @apply bg-primary/10 font-semibold text-primary-strong;
     }
   }
 
@@ -56,6 +56,22 @@
 
   .account-identity__name {
     @apply text-sm text-muted;
+  }
+
+  .theme-toggle {
+    @apply ml-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-transparent p-0 text-foreground cursor-pointer;
+
+    &:hover {
+      @apply bg-foreground/10;
+    }
+
+    & svg {
+      @apply h-5 w-5;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2;
+    }
   }
 
   @media (max-width: 640px) {

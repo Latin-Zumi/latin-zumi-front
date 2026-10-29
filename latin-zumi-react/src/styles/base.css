@@ -10,13 +10,14 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold text-foreground;
+    font-family: var(--font-display);
   }
 
   a {
-    @apply text-primary underline;
+    @apply text-primary-strong underline;
 
     &:hover {
-      @apply text-primary-hover;
+      @apply text-foreground;
     }
   }
 
