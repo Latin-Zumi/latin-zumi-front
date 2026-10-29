@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useFieldValidation } from '../../hooks/useFieldValidation';
 import {
   AuthError,
@@ -116,6 +117,10 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         }}
         onBlur={() => validation.blurField('password')}
       />
+
+      <Link className="auth-card__recovery-link" to="/recuperar-contrasena">
+        ¿Olvidaste tu contraseña?
+      </Link>
 
       {formError && (
         <p role="alert" className="form-error">
