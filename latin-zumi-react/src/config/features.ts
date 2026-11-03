@@ -1,8 +1,8 @@
-// Funciones que dependen de endpoints que el backend todavía no tiene.
+// Funciones que dependen de que el backend las tenga listas.
 // Los componentes se conservan; solo se ocultan mientras estén apagadas.
 
-// POST /auth/google y PATCH /users/me no existen en el mínimo funcional
+// POST /auth/google ya existe, pero el CORS del back todavía no permite PATCH /users/me
 export const GOOGLE_AUTH_ENABLED = false;
 
-// /wallet/transactions, /transfers, /deposits y /exchanges solo existen en el mock
-export const TRANSACTIONS_ENABLED = import.meta.env.VITE_USE_MOCK === 'true';
+// /wallet/transactions, /transfers, /deposits y /exchanges
+export const TRANSACTIONS_ENABLED = true;

@@ -10,12 +10,21 @@ export class WalletError extends Error {}
 // 401: el token venció o fue revocado. Hay que cerrar la sesión.
 export class WalletSessionExpiredError extends WalletError {}
 
-// Cuenta tal como la devuelve GET /accounts
-interface AccountResponse {
+// Cuenta tal como la devuelve GET /accounts (y los saldos de cada operación)
+export interface AccountResponse {
   id: string;
   wallet_id: string;
   currency: Currency;
   balance: string;
+}
+
+export function toBalance(account: AccountResponse): Balance {
+  return {
+    account_id: account.id,
+    wallet_id: account.wallet_id,
+    currency: account.currency,
+    amount: account.balance,
+  };
 }
 
 const delay = (ms: number) =>
@@ -59,10 +68,5 @@ export async function getBalances(): Promise<Balance[]> {
 
   // Los saldos en "0" también se muestran
   const { data } = (await response.json()) as { data: AccountResponse[] };
-  return data.map((account) => ({
-    account_id: account.id,
-    wallet_id: account.wallet_id,
-    currency: account.currency,
-    amount: account.balance,
-  }));
+  return data.map(toBalance);
 }

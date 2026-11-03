@@ -5,6 +5,7 @@ export const TRANSACTION_TYPE_LABELS: Record<TransactionType, string> = {
   transfer_sent: 'Transferencia enviada',
   transfer_received: 'Transferencia recibida',
   exchange: 'Cambio de moneda',
+  withdrawal: 'Retiro',
 };
 
 export const TRANSACTION_STATUS_LABELS: Record<TransactionStatus, string> = {

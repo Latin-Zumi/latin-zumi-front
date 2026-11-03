@@ -13,7 +13,8 @@ export type TransactionType =
   | 'deposit'
   | 'transfer_sent'
   | 'transfer_received'
-  | 'exchange';
+  | 'exchange'
+  | 'withdrawal';
 
 export type TransactionStatus = 'completed' | 'pending' | 'failed';
 
@@ -53,6 +54,11 @@ export type TransactionErrorCode =
   | 'UNAUTHORIZED'
   | 'RECIPIENT_NOT_FOUND'
   | 'QUOTE_EXPIRED'
+  | 'QUOTE_ALREADY_USED'
+  | 'AMOUNT_TOO_SMALL'
+  | 'SAME_CURRENCY'
+  | 'CONVERSION_UNAVAILABLE'
+  | 'IDEMPOTENCY_CONFLICT'
   | 'INSUFFICIENT_FUNDS'
   | 'SELF_TRANSFER'
   | 'CONNECTION'
