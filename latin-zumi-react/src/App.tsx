@@ -11,6 +11,8 @@ import About from './pages/About';
 import CompleteProfile from './pages/CompleteProfile';
 import Login from './pages/Login';
 import PasswordRecovery from './pages/PasswordRecovery';
+import PasswordReset from './pages/PasswordReset';
+import ChangePassword from './pages/ChangePassword';
 import Register from './pages/Register';
 import AdminOverview from './pages/admin/AdminOverview';
 import AdminSettings from './pages/admin/AdminSettings';
@@ -25,6 +27,10 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} />
         <Route path="/recuperar-contrasena" element={<PasswordRecovery />} />
+        {/* A esta ruta lleva el enlace del email: PASSWORD_RESET_URL en el back */}
+        <Route path="/restablecer-contrasena" element={<PasswordReset />} />
+        {/* Fuera de ProtectedRoute: es adonde manda cuando el back pide cambiar la contraseña */}
+        <Route path="/cambiar-contrasena" element={<ChangePassword />} />
         <Route path="/register" element={<Register />} />
         {/* Solo los usuarios de Google llegan sin país; el registro normal ya lo pide */}
         {GOOGLE_AUTH_ENABLED && (

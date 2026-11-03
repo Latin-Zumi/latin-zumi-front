@@ -69,6 +69,9 @@ export function Navbar() {
               <span className="account-identity__name">
                 {user.nombre || user.email}
               </span>
+              <NavLink to="/cambiar-contrasena" className={navLinkClass}>
+                Cambiar contraseña
+              </NavLink>
               <Button
                 variant="solid"
                 size="sm"

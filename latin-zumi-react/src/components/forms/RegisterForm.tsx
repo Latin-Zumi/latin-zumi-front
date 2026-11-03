@@ -4,10 +4,7 @@ import { useFieldValidation } from '../../hooks/useFieldValidation';
 import {
   EMAIL_MAX_LENGTH,
   hasDisallowedNameCharacters,
-  getPasswordRequirements,
-  getPasswordLengthMessage,
   NAME_MAX_LENGTH,
-  PASSWORD_MIN_LENGTH,
   PASSWORD_MAX_LENGTH,
   sanitizeName,
 } from '../../utils/registration';
@@ -15,6 +12,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { GOOGLE_AUTH_ENABLED } from '../../config/features';
 import GoogleSignInButton from './GoogleSignInButton';
+import PasswordChecklist from './PasswordChecklist';
 import { PAISES, registerSchema } from './schemas';
 
 type RegisterFields = {
@@ -49,20 +47,6 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const isSubmitting = loading || googleLoading;
-  const passwordLengthMessage = getPasswordLengthMessage(
-    validation.values.password.length,
-  );
-  const passwordRequirements = getPasswordRequirements(validation.values.password);
-  const passwordChecklist = [
-    {
-      label: `Entre ${PASSWORD_MIN_LENGTH} y ${PASSWORD_MAX_LENGTH} caracteres`,
-      met: passwordRequirements.hasMinimumLength,
-      hint: passwordLengthMessage,
-    },
-    { label: 'Incluir una mayúscula', met: passwordRequirements.hasUppercase },
-    { label: 'Incluir un carácter especial', met: passwordRequirements.hasSpecialCharacter },
-  ];
-  const metRequirements = passwordChecklist.filter((item) => item.met).length;
   const showPasswordFeedback = validation.touched.password;
 
   const updateName = (value: string) => {
@@ -189,22 +173,7 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         onBlur={() => validation.blurField('password')}
       />
       {showPasswordFeedback && (
-        <div id="password-feedback" className="mb-4">
-          <ul className="flex list-none flex-col gap-1 text-sm text-muted">
-            {passwordChecklist.map((item) => (
-              <li key={item.label} className={item.met ? 'text-success' : undefined}>
-                <span aria-hidden="true">{item.met ? '✓' : '○'}</span>
-                {' '}{item.label}
-                {item.hint && ` (${item.hint})`}
-                <span className="sr-only">{item.met ? ', cumplido' : ', pendiente'}</span>
-              </li>
-            ))}
-          </ul>
-          {/* Solo cambia cuando cambia la cantidad cumplida, así no se anuncia en cada tecla */}
-          <p className="sr-only" aria-live="polite">
-            {metRequirements} de {passwordChecklist.length} requisitos cumplidos
-          </p>
-        </div>
+        <PasswordChecklist id="password-feedback" value={validation.values.password} />
       )}
 
       {formError && (

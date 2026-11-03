@@ -152,10 +152,10 @@ export default function ExchangeModal({ isOpen, onClose, defaultCurrency }: Exch
       submittingRef.current = false;
       close();
     } catch (error) {
-      // Vencida o ya usada: en los dos casos hay que pedir otra cotización
+      // Vencida, ya usada o inexistente: en todos los casos hay que pedir otra cotización
       if (
         error instanceof TransactionError &&
-        (error.code === 'QUOTE_EXPIRED' || error.code === 'QUOTE_ALREADY_USED')
+        ['QUOTE_EXPIRED', 'QUOTE_ALREADY_USED', 'QUOTE_NOT_FOUND'].includes(error.code)
       ) {
         setExpiredByServer(true);
       }

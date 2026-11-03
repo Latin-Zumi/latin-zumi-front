@@ -40,6 +40,7 @@ describe('authService con la API real', () => {
     it.each([
       [400, 'Revisá los datos ingresados.'],
       [401, 'Email o contraseña incorrectos.'],
+      [403, 'Tu cuenta está bloqueada. Escribinos para reactivarla.'],
       [429, 'Demasiados intentos. Esperá unos minutos.'],
       [500, 'No pudimos conectar con el servidor. Probá de nuevo.'],
       [418, 'No pudimos iniciar sesión. Probá de nuevo.'],
@@ -57,6 +58,14 @@ describe('authService con la API real', () => {
       await expect(auth.login(CREDENTIALS)).rejects.toThrow(
         'No pudimos conectar con el servidor. Probá de nuevo.',
       );
+    });
+
+    it('guarda si el back pide cambiar la contraseña', async () => {
+      mockFetch(jsonResponse(200, { ...TEST_SESSION, password_change_required: true }));
+
+      await auth.login(CREDENTIALS);
+
+      expect(auth.getSession()?.password_change_required).toBe(true);
     });
 
     it('no guarda una respuesta que no tiene la forma de una sesión', async () => {
@@ -121,6 +130,74 @@ describe('authService con la API real', () => {
     });
   });
 
+  describe('recuperar contraseña', () => {
+    it('pide el email de recuperación', async () => {
+      const fetchMock = mockFetch(jsonResponse(202, { message: 'ok' }));
+
+      await auth.forgotPassword('valentina@latinzumi.test');
+
+      const call = fetchCall(fetchMock);
+      expect(call.url).toBe(`${API_URL}/auth/forgot-password`);
+      expect(call.body).toEqual({ email: 'valentina@latinzumi.test' });
+    });
+
+    it('restablece con el token del enlace', async () => {
+      const fetchMock = mockFetch(jsonResponse(204));
+
+      await auth.resetPassword('token-del-email', 'Nueva-clave1');
+
+      const call = fetchCall(fetchMock);
+      expect(call.url).toBe(`${API_URL}/auth/reset-password`);
+      expect(call.body).toEqual({ token: 'token-del-email', password: 'Nueva-clave1' });
+    });
+
+    it('distingue el enlace vencido de una contraseña inválida', async () => {
+      mockFetch(jsonResponse(400, { code: 'INVALID_RESET_TOKEN' }));
+      const expired = await auth.resetPassword('t', 'Nueva-clave1').catch((error: unknown) => error);
+      expect(expired).toBeInstanceOf(auth.ResetTokenError);
+
+      mockFetch(jsonResponse(400, { message: 'La contraseña debe tener al menos 8 caracteres' }));
+      const invalid = await auth.resetPassword('t', 'corta').catch((error: unknown) => error);
+      expect(invalid).not.toBeInstanceOf(auth.ResetTokenError);
+      expect((invalid as Error).message).toBe('La contraseña no cumple los requisitos necesarios.');
+    });
+  });
+
+  describe('cambiar contraseña', () => {
+    beforeEach(() => storeSession());
+
+    it('manda la contraseña actual y la nueva con el token', async () => {
+      const fetchMock = mockFetch(jsonResponse(204));
+
+      await auth.changePassword('Actual-1', 'Nueva-clave1');
+
+      const call = fetchCall(fetchMock);
+      expect(call.url).toBe(`${API_URL}/auth/change-password`);
+      expect(call.headers.get('Authorization')).toBe(`Bearer ${TEST_SESSION.token}`);
+      expect(call.body).toEqual({ current_password: 'Actual-1', new_password: 'Nueva-clave1' });
+    });
+
+    it('un 401 con código es la contraseña actual; sin código, la sesión vencida', async () => {
+      mockFetch(jsonResponse(401, { code: 'INVALID_CURRENT_PASSWORD' }));
+      const wrong = await auth.changePassword('mal', 'Nueva-clave1').catch((error: unknown) => error);
+      expect(wrong).not.toBeInstanceOf(auth.SessionExpiredError);
+      expect((wrong as Error).message).toBe('La contraseña actual es incorrecta.');
+
+      mockFetch(jsonResponse(401, { message: 'Autenticación requerida' }));
+      const expired = await auth.changePassword('Actual-1', 'Nueva-clave1').catch((error: unknown) => error);
+      expect(expired).toBeInstanceOf(auth.SessionExpiredError);
+    });
+
+    it.each([
+      ['PASSWORD_UNCHANGED', 400, 'La nueva contraseña tiene que ser distinta de la actual.'],
+      ['PASSWORD_NOT_SET', 409, 'Tu cuenta entra con Google y no tiene contraseña.'],
+    ])('con %s muestra su mensaje', async (code, status, message) => {
+      mockFetch(jsonResponse(status, { code }));
+
+      await expect(auth.changePassword('Actual-1', 'Nueva-clave1')).rejects.toThrow(message);
+    });
+  });
+
   describe('isProfileComplete', () => {
     it('pide país y nombre', () => {
       expect(auth.isProfileComplete(TEST_SESSION.user)).toBe(true);
@@ -148,6 +225,17 @@ describe('authService en modo mock', () => {
 
     expect(session.user.nombre).toBe('Valentina');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('cambia la contraseña del usuario de prueba', async () => {
+    storeSession();
+    const change = auth.changePassword(CREDENTIALS.password, 'Otra-clave1');
+    await vi.advanceTimersByTimeAsync(400);
+    await change;
+
+    const login = expect(auth.login(CREDENTIALS)).rejects.toThrow('Email o contraseña incorrectos.');
+    await vi.advanceTimersByTimeAsync(400);
+    await login;
   });
 
   it('rechaza una contraseña incorrecta', async () => {

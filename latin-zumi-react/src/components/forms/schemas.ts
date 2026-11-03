@@ -54,3 +54,20 @@ export const loginSchema = z.object({
       `La contraseña no puede superar los ${LOGIN_PASSWORD_MAX_LENGTH} caracteres`,
     ),
 });
+
+export interface NewPasswordValues {
+  password: string;
+  confirmation: string;
+}
+
+export type NewPasswordErrors = Partial<Record<keyof NewPasswordValues, string>>;
+
+// Contraseña nueva y su confirmación, al restablecerla o cambiarla. Vacío si están bien.
+export function validateNewPassword({ password, confirmation }: NewPasswordValues): NewPasswordErrors {
+  const errors: NewPasswordErrors = {};
+  const result = passwordSchema.safeParse(password);
+  if (!result.success) errors.password = result.error.issues[0]?.message;
+  if (!confirmation) errors.confirmation = 'Repetí la contraseña nueva';
+  else if (confirmation !== password) errors.confirmation = 'Las contraseñas no coinciden';
+  return errors;
+}

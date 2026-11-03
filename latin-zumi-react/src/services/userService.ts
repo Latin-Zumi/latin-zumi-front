@@ -1,5 +1,5 @@
 import { updateMockUser } from '../mocks/users';
-import { ApiConnectionError, apiRequest } from './apiClient';
+import { ApiConnectionError, apiRequest, readErrorCode } from './apiClient';
 import { getSession, type AuthUser } from './authService';
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
@@ -10,6 +10,12 @@ export interface ProfileData {
 }
 
 export class ProfileError extends Error {}
+
+// Cambiar el país cambia la moneda preferida, y el back busca la cuenta de esa moneda
+const PROFILE_ERRORS: Record<string, string> = {
+  WALLET_NOT_FOUND: 'No encontramos tu billetera. Cerrá sesión y volvé a ingresar.',
+  ACCOUNT_NOT_FOUND: 'No encontramos la cuenta de tu billetera. Probá de nuevo más tarde.',
+};
 
 const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -45,11 +51,9 @@ export async function updateProfile(data: ProfileData): Promise<AuthUser> {
   }
 
   if (!response.ok) {
-    throw new ProfileError(
-      response.status === 401
-        ? 'Tu sesión expiró. Volvé a iniciar sesión.'
-        : 'No pudimos guardar tus datos. Probá de nuevo.',
-    );
+    if (response.status === 401) throw new ProfileError('Tu sesión expiró. Volvé a iniciar sesión.');
+    const code = await readErrorCode(response);
+    throw new ProfileError(PROFILE_ERRORS[code ?? ''] ?? 'No pudimos guardar tus datos. Probá de nuevo.');
   }
 
   const { user } = (await response.json()) as { user: AuthUser };

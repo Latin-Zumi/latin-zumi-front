@@ -183,3 +183,16 @@ export function setMockUserStatus(id: string, estado: string): MockUser | null {
   writeUsers({ ...users, [current.email]: updated });
   return updated;
 }
+
+// Simula POST /auth/change-password
+export function changeMockPassword(
+  email: string,
+  currentPassword: string,
+  newPassword: string,
+): 'ok' | 'INVALID_CURRENT_PASSWORD' | 'PASSWORD_UNCHANGED' {
+  const key = normalizeEmail(email);
+  if (readPasswords()[key] !== currentPassword) return 'INVALID_CURRENT_PASSWORD';
+  if (currentPassword === newPassword) return 'PASSWORD_UNCHANGED';
+  writeJson(PASSWORDS_KEY, { ...readJson<string>(PASSWORDS_KEY), [key]: newPassword });
+  return 'ok';
+}

@@ -119,8 +119,22 @@
     }
   }
 
-  .auth-card .auth-card__recovery-unavailable {
-    margin: 16px 0 0;
+  .auth-card .auth-card__text-button {
+    padding: 0;
+    background: none;
+    color: var(--color-primary-strong);
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* Link con forma de botón, debajo de un aviso */
+  .auth-card .auth-card__action {
+    display: flex;
+    width: 100%;
+    min-height: 50px;
+    margin-top: 16px;
+    border-radius: 10px;
   }
 
   .auth-card .form-error--google,
