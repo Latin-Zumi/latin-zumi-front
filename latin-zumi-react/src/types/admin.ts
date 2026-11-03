@@ -40,7 +40,7 @@ export interface SettingsChange {
   old_value: string;
   new_value: string;
   changed_at: string;
-  changed_by: AdminActor;
+  changed_by: AdminActor | null; // null si el usuario ya no existe
 }
 
 export interface AdminUser {
@@ -76,6 +76,7 @@ export type AdminErrorCode =
   | 'UNAUTHORIZED'
   | 'FORBIDDEN'
   | 'USER_NOT_FOUND'
+  | 'TOO_MANY_REQUESTS'
   | 'INVALID_SETTINGS'
   | 'CANNOT_BLOCK_SELF'
   | 'CONNECTION'

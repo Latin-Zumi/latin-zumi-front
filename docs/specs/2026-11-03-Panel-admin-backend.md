@@ -24,6 +24,8 @@ Este documento es el contrato que el front ya usa en el mock. Si back necesita c
 - **Porcentajes:** strings con 2 decimales (`"1.50"` es 1,5%).
 - **Listas:** `{ items, page, total }`, igual que `/wallet/transactions`.
 - **Errores:** `{ "code": "...", "message": "..." }`.
+- **Envoltorio:** el back implementó todas las respuestas de `/admin/*` dentro de `{ "data": ... }`. Los ejemplos de abajo muestran lo que va adentro.
+- **`interest_rates` en el `PATCH`:** el back lo recibe como mapa, `{ "USD": "4.50" }`, en lugar de la lista del ejemplo de abajo. El `GET` sigue devolviendo una lista.
 
 ### Endpoints
 
@@ -136,7 +138,7 @@ Si el usuario no existe: `404` con `{ "code": "USER_NOT_FOUND" }`.
 - **No se puede bloquear a uno mismo:** responde `422` con `{ "code": "CANNOT_BLOCK_SELF" }`.
 - **Al bloquear:**
   - se revocan las sesiones del usuario;
-  - `POST /auth/login` y `POST /auth/google` responden `403` con `{ "code": "USER_BLOCKED" }` (el código que ya usa el back);
+  - `POST /auth/login` y `POST /auth/google` responden `403` con `{ "code": "ACCOUNT_BLOCKED" }`;
   - las operaciones que ya terminaron no se tocan.
 
 ### Aplicar los parámetros

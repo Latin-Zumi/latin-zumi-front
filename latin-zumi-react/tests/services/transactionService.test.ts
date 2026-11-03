@@ -128,6 +128,7 @@ describe('transactionService con la API real', () => {
     [404, { code: 'WALLET_NOT_FOUND' }, 'WALLET_NOT_FOUND', 'No encontramos tu billetera. Cerrá sesión y volvé a ingresar.'],
     [500, { code: 'ACCOUNT_NOT_FOUND' }, 'ACCOUNT_NOT_FOUND', 'No encontramos la cuenta de esa moneda en tu billetera.'],
     [400, { code: 'INVALID_IDEMPOTENCY_KEY' }, 'INVALID_IDEMPOTENCY_KEY', 'No pudimos procesar la operación. Empezá de nuevo.'],
+    [429, { code: 'TOO_MANY_REQUESTS' }, 'TOO_MANY_REQUESTS', 'Demasiados intentos. Esperá unos minutos.'],
     [503, { code: 'CONVERSION_UNAVAILABLE' }, 'CONVERSION_UNAVAILABLE', 'No hay una cotización disponible en este momento. Probá más tarde.'],
     [401, undefined, 'UNAUTHORIZED', 'Tu sesión expiró. Volvé a iniciar sesión.'],
     [500, { code: 'ALGO_NUEVO' }, 'UNKNOWN', 'No pudimos completar la operación. Probá de nuevo.'],

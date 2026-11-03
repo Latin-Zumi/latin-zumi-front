@@ -15,7 +15,7 @@ El Report04 del back (revisión de endpoints entre los dos repos) marca dos brec
 - `QUOTE_NOT_FOUND` (404)
 - `WALLET_NOT_FOUND` (404)
 - `ACCOUNT_NOT_FOUND` (404/500)
-- `USER_BLOCKED` (403 en el login y en Google)
+- `ACCOUNT_BLOCKED` (403 en el login y en Google)
 - `INVALID_IDEMPOTENCY_KEY` (400)
 
 ## Solución propuesta
@@ -39,7 +39,7 @@ El Report04 del back (revisión de endpoints entre los dos repos) marca dos brec
 
 ### Errores
 - **`transactionService`:** suma `QUOTE_NOT_FOUND`, `WALLET_NOT_FOUND`, `ACCOUNT_NOT_FOUND` e `INVALID_IDEMPOTENCY_KEY`. En el modal de cambio, `QUOTE_NOT_FOUND` se trata igual que una cotización vencida: hay que pedir otra.
-- **Login y Google:** un `403` muestra "Tu cuenta está bloqueada". Se decide por el status, así que funciona con `USER_BLOCKED` o con `ACCOUNT_BLOCKED`.
+- **Login y Google:** un `403` muestra "Tu cuenta está bloqueada". Se decide por el status, no por el código.
 - **`userService`** (`PATCH /users/me`): `WALLET_NOT_FOUND` y `ACCOUNT_NOT_FOUND` con su mensaje.
 
 ## Archivos afectados
@@ -51,7 +51,6 @@ El Report04 del back (revisión de endpoints entre los dos repos) marca dos brec
 - `src/components/forms/PasswordChecklist.tsx` (nuevo) y `src/components/forms/RegisterForm.tsx`
 - `src/pages/PasswordRecovery.tsx`, `src/pages/PasswordReset.tsx` (nuevo), `src/pages/ChangePassword.tsx` (nuevo)
 - `src/App.tsx`, `src/components/common/Navbar.tsx`
-- `docs/specs/2026-11-03-Panel-admin-backend.md`: `ACCOUNT_BLOCKED` pasa a `USER_BLOCKED`, como ya está en el back.
 - Tests de `authService`, `transactionService`, `ProtectedRoute` y de las pantallas nuevas.
 
 ## Pasos
@@ -73,5 +72,5 @@ Probado con el mock y con tests. Falta probarlo contra el back real.
 ## Riesgos / notas
 - **Largo de la contraseña:** el back ahora acepta de 8 a 128 caracteres; el front sigue en 8 a 24 por decisión del equipo. El login acepta hasta 128, para no dejar afuera cuentas con contraseñas largas.
 - **`PASSWORD_RESET_URL` en Render** tiene que apuntar al front de Vercel: `https://latin-zumi-front-1x4s.vercel.app/restablecer-contrasena`. Si no, el link del email lleva a `localhost`.
-- **CORS:** el Report04 dice que el back ya permite `PATCH`, pero en `origin/dev` del back `src/config/cors.ts` sigue con `['GET', 'POST']`, y Render responde lo mismo. Sin eso no funcionan completar el perfil ni el panel de admin.
+- **CORS:** `main` del back ya permite `PATCH`, pero falta desplegarlo: Render todavía responde `GET, POST`. Sin eso no funcionan completar el perfil ni el panel de admin.
 - **El `403` por contraseña vieja no trae `code`.** El front lo reconoce por el flag del login. Si back le agrega un código, por ejemplo `PASSWORD_CHANGE_REQUIRED`, los otros servicios también podrían reconocerlo.

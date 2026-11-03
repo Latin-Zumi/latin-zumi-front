@@ -36,7 +36,7 @@ describe('adminService con la API real', () => {
   });
 
   it('pide las métricas del período con el token', async () => {
-    const fetchMock = mockFetch(jsonResponse(200, { period: 'month', users: {}, volume: [] }));
+    const fetchMock = mockFetch(jsonResponse(200, { data: { period: 'month', users: {}, volume: [] } }));
 
     await service.getMetrics('month');
 
@@ -45,21 +45,32 @@ describe('adminService con la API real', () => {
     expect(call.headers.get('Authorization')).toBe('Bearer token-admin');
   });
 
-  it('guarda los parámetros con PATCH', async () => {
-    const changes = { exchange_spread_percent: '1.50' };
-    const fetchMock = mockFetch(jsonResponse(200, { exchange_spread_percent: '1.50', interest_rates: [] }));
+  it('guarda los parámetros con PATCH y manda las tasas como mapa', async () => {
+    const fetchMock = mockFetch(
+      jsonResponse(200, { data: { exchange_spread_percent: '1.50', interest_rates: [] } }),
+    );
 
-    await service.updateSettings(changes);
+    const updated = await service.updateSettings({
+      exchange_spread_percent: '1.50',
+      interest_rates: [
+        { currency: 'USD', annual_percent: '4.00' },
+        { currency: 'ARS', annual_percent: '0.00' },
+      ],
+    });
 
     const call = fetchCall(fetchMock);
     expect(call.url).toBe(`${API_URL}/admin/settings`);
     expect(call.method).toBe('PATCH');
     expect(call.headers.get('Content-Type')).toBe('application/json');
-    expect(call.body).toEqual(changes);
+    expect(call.body).toEqual({
+      exchange_spread_percent: '1.50',
+      interest_rates: { USD: '4.00', ARS: '0.00' },
+    });
+    expect(updated.exchange_spread_percent).toBe('1.50');
   });
 
   it('la búsqueda de usuarios no manda los filtros vacíos', async () => {
-    const fetchMock = mockFetch(jsonResponse(200, { items: [], page: 1, total: 0 }));
+    const fetchMock = mockFetch(jsonResponse(200, { data: { items: [], page: 1, total: 0 } }));
 
     await service.getUsers({ search: 'vale', estado: undefined, page: 1 });
 
@@ -69,9 +80,11 @@ describe('adminService con la API real', () => {
   it('el detalle pasa los saldos y movimientos al formato del front', async () => {
     mockFetch(
       jsonResponse(200, {
-        user: { id: 'u1', nombre: 'Vale', email: 'v@x.test', pais: null, roles: ['user'], estado: 'activo', created_at: '' },
-        balances: [{ id: 'cuenta-1', wallet_id: 'billetera-1', currency: 'USD', balance: '10.00' }],
-        recent_transactions: [{ ...makeTransaction(), counterparty: null, exchange: null }],
+        data: {
+          user: { id: 'u1', nombre: 'Vale', email: 'v@x.test', pais: null, roles: ['user'], estado: 'activo', created_at: '' },
+          balances: [{ id: 'cuenta-1', wallet_id: 'billetera-1', account_id: 'cuenta-1', currency: 'USD', balance: '10.00' }],
+          recent_transactions: [{ ...makeTransaction(), counterparty: null, exchange: null }],
+        },
       }),
     );
 
@@ -85,7 +98,7 @@ describe('adminService con la API real', () => {
 
   it('cambiar el estado devuelve el usuario actualizado', async () => {
     const user = { id: 'u1', estado: 'bloqueado' };
-    const fetchMock = mockFetch(jsonResponse(200, { user }));
+    const fetchMock = mockFetch(jsonResponse(200, { data: { user } }));
 
     await expect(service.setUserStatus('u1', 'bloqueado')).resolves.toEqual(user);
     expect(fetchCall(fetchMock).body).toEqual({ estado: 'bloqueado' });
@@ -95,6 +108,7 @@ describe('adminService con la API real', () => {
     [403, undefined, 'FORBIDDEN'],
     [422, { code: 'CANNOT_BLOCK_SELF' }, 'CANNOT_BLOCK_SELF'],
     [404, { code: 'USER_NOT_FOUND' }, 'USER_NOT_FOUND'],
+    [429, { code: 'TOO_MANY_REQUESTS' }, 'TOO_MANY_REQUESTS'],
     [401, undefined, 'UNAUTHORIZED'],
     [500, { code: 'ALGO_NUEVO' }, 'UNKNOWN'],
   ])('con status %i y body %j falla con %s', async (status, body, code) => {

@@ -32,6 +32,7 @@ const ERROR_MESSAGES: Record<AdminErrorCode, string> = {
   UNAUTHORIZED: 'Tu sesión expiró. Volvé a iniciar sesión.',
   FORBIDDEN: 'No tenés permiso para entrar al panel de administración.',
   USER_NOT_FOUND: 'No encontramos ese usuario.',
+  TOO_MANY_REQUESTS: 'Demasiados intentos. Esperá unos minutos.',
   INVALID_SETTINGS: 'Algún valor no es válido. Revisá los porcentajes.',
   CANNOT_BLOCK_SELF: 'No podés bloquear tu propia cuenta.',
   CONNECTION: 'No pudimos conectar con el servidor. Probá de nuevo.',
@@ -95,7 +96,9 @@ async function request<T>(
   }
 
   if (!response.ok) throw new AdminError(await readErrorCode(response));
-  return fromApi(await response.json());
+  // Todas las rutas de /admin envuelven la respuesta en { data }
+  const { data } = (await response.json()) as { data: unknown };
+  return fromApi(data);
 }
 
 function patch(body: unknown): RequestInit {
@@ -129,6 +132,17 @@ function toUserDetail(body: unknown): AdminUserDetail {
   };
 }
 
+// El GET devuelve las tasas como lista, pero el PATCH las espera como mapa: { USD: "4.00" }
+function toSettingsBody({ interest_rates, ...changes }: AdminSettingsChanges) {
+  if (!interest_rates) return changes;
+  return {
+    ...changes,
+    interest_rates: Object.fromEntries(
+      interest_rates.map(({ currency, annual_percent }) => [currency, annual_percent]),
+    ),
+  };
+}
+
 export function getMetrics(period: MetricsPeriod): Promise<AdminMetrics> {
   return request(
     `/admin/metrics${toQuery({ period })}`,
@@ -144,7 +158,7 @@ export function getSettings(): Promise<AdminSettings> {
 export function updateSettings(changes: AdminSettingsChanges): Promise<AdminSettings> {
   return request(
     '/admin/settings',
-    patch(changes),
+    patch(toSettingsBody(changes)),
     (email) => updateMockAdminSettings(email, changes),
   );
 }
