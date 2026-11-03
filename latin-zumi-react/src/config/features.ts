@@ -6,3 +6,6 @@ export const GOOGLE_AUTH_ENABLED = false;
 
 // /wallet/transactions, /transfers, /deposits y /exchanges
 export const TRANSACTIONS_ENABLED = true;
+
+// /admin/* solo existe en el mock: ver docs/specs/2026-11-03-Panel-admin-backend.md
+export const ADMIN_ENABLED = import.meta.env.VITE_USE_MOCK === 'true';

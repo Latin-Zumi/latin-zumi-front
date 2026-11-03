@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { ADMIN_ENABLED } from "../../config/features";
 import { useAuth } from "../../context/auth";
 import Button from "../ui/Button";
 import ThemeToggle from "./ThemeToggle";
@@ -12,7 +13,7 @@ export function Navbar() {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const [logoutError, setLogoutError] = useState('');
-  const isAdmin = user?.roles.includes('admin') ?? false;
+  const isAdmin = ADMIN_ENABLED && (user?.roles.includes('admin') ?? false);
 
   const handleLogout = async () => {
     setLogoutError('');
