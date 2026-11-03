@@ -1,0 +1,248 @@
+@layer components {
+  .admin-layout {
+    @apply flex min-h-screen flex-col;
+  }
+
+  .admin-header {
+    @apply sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur;
+  }
+
+  .admin-header__inner {
+    @apply mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3;
+  }
+
+  .admin-brand {
+    @apply inline-flex items-center gap-2 text-lg font-bold text-foreground no-underline;
+    font-family: var(--font-display);
+
+    &:hover {
+      @apply text-foreground;
+    }
+  }
+
+  .admin-brand__tag {
+    @apply rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold tracking-widest text-primary-strong uppercase;
+  }
+
+  /* En el celular las pestañas pasan a una fila propia, debajo de la marca */
+  .admin-nav {
+    @apply order-last flex basis-full items-center gap-1 overflow-x-auto sm:order-none sm:flex-1 sm:basis-auto sm:gap-2;
+  }
+
+  .admin-nav__link {
+    @apply shrink-0 rounded-full px-3 py-1.5 text-sm font-medium text-muted no-underline transition-colors;
+
+    &:hover {
+      @apply bg-background text-foreground;
+    }
+
+    &.is-active {
+      @apply bg-primary/10 font-semibold text-primary-strong;
+    }
+  }
+
+  .admin-header__actions {
+    @apply ml-auto flex items-center gap-3 text-sm;
+
+    & .theme-toggle {
+      @apply ml-0;
+    }
+  }
+
+  .admin-header__user {
+    @apply text-muted;
+  }
+
+  .admin-header__back {
+    @apply font-medium text-foreground no-underline;
+
+    &:hover {
+      @apply underline;
+    }
+  }
+
+  .admin-main {
+    @apply mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8;
+  }
+
+  .admin-page {
+    @apply flex flex-col gap-6;
+  }
+
+  .admin-page__header {
+    @apply flex flex-wrap items-end justify-between gap-4;
+
+    & h1 {
+      @apply mb-1 text-3xl font-bold tracking-tight;
+    }
+  }
+
+  .admin-page__intro {
+    @apply mb-0 text-sm text-muted;
+  }
+
+  .admin-page__actions {
+    @apply flex flex-wrap items-center gap-3;
+  }
+
+  .admin-page__back {
+    @apply self-start text-sm font-semibold text-primary-strong no-underline;
+
+    &:hover {
+      @apply underline;
+    }
+  }
+
+  .admin-segmented {
+    @apply inline-flex rounded-full border border-border bg-surface p-1;
+  }
+
+  .admin-segmented__option {
+    @apply rounded-full bg-transparent px-4 py-1.5 text-sm text-muted;
+
+    &[aria-pressed="true"] {
+      @apply bg-primary/15 font-semibold text-primary-strong;
+    }
+  }
+
+  .admin-stats {
+    @apply m-0 grid grid-cols-2 gap-4 lg:grid-cols-4;
+  }
+
+  .admin-stat {
+    @apply flex flex-col gap-1 rounded-lg border border-border bg-surface p-4;
+
+    & dt {
+      @apply text-sm text-muted;
+    }
+
+    & dd {
+      @apply m-0 text-3xl font-bold;
+      font-family: var(--font-display);
+    }
+  }
+
+  .admin-card {
+    @apply flex min-w-0 flex-col gap-4 rounded-lg border border-border bg-surface p-4 sm:p-6;
+
+    & h2 {
+      @apply m-0 text-lg;
+    }
+  }
+
+  .admin-card__note {
+    @apply m-0 text-sm text-muted;
+  }
+
+  .admin-table-wrapper {
+    @apply overflow-x-auto;
+  }
+
+  .admin-table {
+    @apply w-full border-collapse text-sm;
+
+    & th,
+    & td {
+      @apply border-b border-divider px-3 py-2 text-left whitespace-nowrap;
+    }
+
+    & thead th {
+      @apply text-xs font-semibold tracking-wide text-muted uppercase;
+    }
+
+    & tbody th {
+      @apply font-medium;
+    }
+
+    & td {
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .admin-badge {
+    @apply ml-2 rounded-full bg-secondary/15 px-2 py-0.5 text-xs font-semibold text-secondary;
+  }
+
+  .admin-status {
+    @apply inline-block rounded-full px-2 py-0.5 text-xs font-semibold;
+  }
+
+  .admin-status--activo {
+    @apply bg-success/15 text-success;
+  }
+
+  .admin-status--bloqueado {
+    @apply bg-danger/15 text-danger;
+  }
+
+  .admin-filters {
+    @apply grid grid-cols-1 items-end gap-4 rounded-lg border border-border bg-surface p-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto];
+
+    & label {
+      @apply flex flex-col gap-2 text-sm font-medium;
+    }
+
+    & select,
+    & input {
+      @apply min-w-0 rounded-sm border border-border bg-field px-3 py-2 text-foreground;
+    }
+  }
+
+  .admin-pagination {
+    @apply flex flex-wrap items-center justify-between gap-3 text-sm text-muted;
+  }
+
+  .admin-settings__group {
+    @apply m-0 flex flex-col gap-2 border-0 p-0;
+
+    & legend {
+      @apply mb-3 text-lg font-bold;
+      font-family: var(--font-display);
+    }
+
+    & .input-container {
+      @apply mb-0;
+    }
+  }
+
+  .admin-settings__rates {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4;
+  }
+
+  .admin-settings__footer {
+    @apply flex flex-wrap items-center justify-between gap-3 border-t border-divider pt-4;
+
+    & .btn {
+      @apply ml-auto;
+    }
+  }
+
+  .admin-history {
+    @apply m-0 flex list-none flex-col p-0;
+  }
+
+  .admin-history__item {
+    @apply grid grid-cols-1 gap-1 border-b border-divider py-3 text-sm last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-4;
+  }
+
+  .admin-history__field {
+    @apply font-medium;
+  }
+
+  .admin-history__meta {
+    @apply text-muted;
+  }
+
+  .admin-balances {
+    @apply m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 lg:grid-cols-4;
+
+    & li {
+      @apply flex flex-col gap-1 rounded-md border border-border bg-background p-3 text-sm;
+    }
+
+    & strong {
+      @apply text-base;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
