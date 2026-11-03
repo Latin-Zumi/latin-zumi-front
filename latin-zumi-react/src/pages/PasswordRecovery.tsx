@@ -3,15 +3,19 @@ import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { emailSchema } from '../components/forms/schemas';
+import { AuthError, forgotPassword } from '../services/authService';
 
 export default function PasswordRecovery() {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [recoveryUnavailable, setRecoveryUnavailable] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (recoveryUnavailable) return;
+    if (loading) return;
+    setFormError('');
 
     const result = emailSchema.safeParse(email);
     if (!result.success) {
@@ -20,7 +24,17 @@ export default function PasswordRecovery() {
     }
 
     setEmailError('');
-    setRecoveryUnavailable(true);
+    setLoading(true);
+    try {
+      await forgotPassword(email.trim());
+      setSent(true);
+    } catch (error) {
+      setFormError(
+        error instanceof AuthError ? error.message : 'No pudimos enviar el pedido. Probá de nuevo.',
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -35,43 +49,49 @@ export default function PasswordRecovery() {
           </p>
         </header>
 
-        <form onSubmit={handleSubmit} noValidate>
-          <Input
-            id="recovery-email"
-            label="Email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            maxLength={254}
-            error={emailError}
-            onChange={(event) => {
-              setEmail(event.target.value);
-              setEmailError('');
-              setRecoveryUnavailable(false);
-            }}
-            onBlur={() => {
-              if (!email) return;
-              const result = emailSchema.safeParse(email);
-              setEmailError(
-                result.success
-                  ? ''
-                  : result.error.issues[0]?.message ?? 'Ingresá un email válido.',
-              );
-            }}
-          />
+        {sent ? (
+          // El mismo mensaje exista o no la cuenta, para no revelar qué emails están registrados
+          <p className="form-notice" role="status">
+            Si {email.trim()} está registrado, te enviamos un correo con un enlace para
+            restablecer tu contraseña. Usalo pronto: vence a los pocos minutos.
+          </p>
+        ) : (
+          <form onSubmit={(event) => void handleSubmit(event)} noValidate>
+            <Input
+              id="recovery-email"
+              label="Email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              maxLength={254}
+              disabled={loading}
+              error={emailError}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setEmailError('');
+              }}
+              onBlur={() => {
+                if (!email) return;
+                const result = emailSchema.safeParse(email);
+                setEmailError(
+                  result.success
+                    ? ''
+                    : result.error.issues[0]?.message ?? 'Ingresá un email válido.',
+                );
+              }}
+            />
 
-          <Button variant="solid" type="submit" disabled={recoveryUnavailable}>
-            Enviar instrucciones
-          </Button>
+            {formError && (
+              <p className="form-error" role="alert">
+                {formError}
+              </p>
+            )}
 
-          {recoveryUnavailable && (
-            <p className="form-error auth-card__recovery-unavailable" role="alert">
-              La recuperación todavía no está disponible para las cuentas de Latin
-              Zumi. El backend aún no ofrece el proceso para restablecer contraseñas;
-              no se envió ningún correo.
-            </p>
-          )}
-        </form>
+            <Button variant="solid" type="submit" loading={loading}>
+              Enviar instrucciones
+            </Button>
+          </form>
+        )}
 
         <p className="auth-card__footer">
           <Link to="/login">Volver al login</Link>

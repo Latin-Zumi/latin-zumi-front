@@ -1,8 +1,9 @@
-import { ApiConnectionError, apiRequest, postJson } from './apiClient';
+import { ApiConnectionError, apiRequest, postJson, readErrorCode } from './apiClient';
 import { FirebaseError } from 'firebase/app';
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { FirebaseConfigurationError, getFirebaseAuth } from './firebase';
 import {
+  changeMockPassword,
   findOrCreateMockGoogleUser,
   loginMockUser,
   registerMockUser,
@@ -35,6 +36,8 @@ export interface AuthUser {
 export interface Session {
   token: string;
   user: AuthUser;
+  // El back la pide cuando la contraseña es vieja (menos de 8 caracteres); mientras tanto responde 403
+  password_change_required?: boolean;
 }
 
 export class AuthError extends Error {}
@@ -95,14 +98,22 @@ async function requestSession(
     throw new AuthError('Respuesta inválida del servidor.');
   }
 
-  const session: Session = { token: data.token, user: data.user };
+  const session: Session = {
+    token: data.token,
+    user: data.user,
+    ...(data.password_change_required && { password_change_required: true }),
+  };
   saveSession(session);
   return session;
 }
 
+const BLOCKED_MESSAGE = 'Tu cuenta está bloqueada. Escribinos para reactivarla.';
+
 // La lógica sale del status HTTP: el body de los errores no es uniforme (el 429 manda { error })
 function authErrorFor(status: number, messages: Record<number, string>, fallback: string): AuthError {
   if (messages[status]) return new AuthError(messages[status]);
+  // El back responde 403 USER_BLOCKED cuando un admin bloqueó la cuenta
+  if (status === 403) return new AuthError(BLOCKED_MESSAGE);
   if (status === 429) return new AuthError('Demasiados intentos. Esperá unos minutos.');
   if (status >= 500) return new AuthError('No pudimos conectar con el servidor. Probá de nuevo.');
   return new AuthError(fallback);
@@ -185,6 +196,7 @@ function googleBackendError(status: number): AuthError {
   if (status === 401) {
     return new AuthError('Google no pudo confirmar tu identidad. Probá de nuevo.');
   }
+  if (status === 403) return new AuthError(BLOCKED_MESSAGE);
   if (status === 409) {
     return new AuthError(
       'Ya existe una cuenta con este email. Ingresá con tu email y contraseña.',
@@ -267,4 +279,97 @@ export async function logout(): Promise<void> {
   } finally {
     clearSession();
   }
+}
+
+async function postAuth(path: string, body: unknown, token?: string): Promise<Response> {
+  try {
+    return await apiRequest(path, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    if (error instanceof ApiConnectionError) {
+      throw new AuthError('No pudimos conectar con el servidor. Probá de nuevo.');
+    }
+    throw error;
+  }
+}
+
+// El back responde 202 exista o no el email, para no revelar qué cuentas existen
+export async function forgotPassword(email: string): Promise<void> {
+  if (USE_MOCK) {
+    await delay(400); // simula la latencia de la API
+    return;
+  }
+
+  const response = await postAuth('/auth/forgot-password', { email });
+  if (!response.ok) {
+    throw authErrorFor(response.status, { 400: 'Ingresá un email válido.' }, 'No pudimos enviar el pedido. Probá de nuevo.');
+  }
+}
+
+// Cuando el enlace del email venció o ya se usó
+export class ResetTokenError extends AuthError {}
+
+export async function resetPassword(token: string, password: string): Promise<void> {
+  if (USE_MOCK) {
+    await delay(400); // el mock no envía emails: cualquier token sirve
+    return;
+  }
+
+  const response = await postAuth('/auth/reset-password', { token, password });
+  if (response.ok) return;
+
+  if ((await readErrorCode(response)) === 'INVALID_RESET_TOKEN') {
+    throw new ResetTokenError('El enlace venció o ya fue usado. Pedí uno nuevo.');
+  }
+  throw authErrorFor(
+    response.status,
+    { 400: 'La contraseña no cumple los requisitos necesarios.' },
+    'No pudimos cambiar la contraseña. Probá de nuevo.',
+  );
+}
+
+// El token venció: hay que volver a iniciar sesión
+export class SessionExpiredError extends AuthError {}
+
+const CHANGE_PASSWORD_ERRORS: Record<string, string> = {
+  INVALID_CURRENT_PASSWORD: 'La contraseña actual es incorrecta.',
+  PASSWORD_UNCHANGED: 'La nueva contraseña tiene que ser distinta de la actual.',
+  PASSWORD_NOT_SET: 'Tu cuenta entra con Google y no tiene contraseña.',
+  CONFLICT: 'Tu contraseña cambió en otro dispositivo. Volvé a iniciar sesión.',
+};
+
+// El back mantiene esta sesión, revoca las demás y deja de pedir el cambio
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const session = getSession();
+  if (!session) throw new SessionExpiredError('Necesitás iniciar sesión.');
+
+  if (USE_MOCK) {
+    await delay(400); // simula la latencia de la API
+    const result = changeMockPassword(session.user.email, currentPassword, newPassword);
+    if (result !== 'ok') throw new AuthError(CHANGE_PASSWORD_ERRORS[result]);
+    return;
+  }
+
+  const response = await postAuth(
+    '/auth/change-password',
+    { current_password: currentPassword, new_password: newPassword },
+    session.token,
+  );
+  if (response.ok) return;
+
+  const code = await readErrorCode(response);
+  if (code && CHANGE_PASSWORD_ERRORS[code]) throw new AuthError(CHANGE_PASSWORD_ERRORS[code]);
+  // Un 401 sin código es el token vencido, no la contraseña actual
+  if (response.status === 401) throw new SessionExpiredError('Tu sesión expiró. Volvé a iniciar sesión.');
+  throw authErrorFor(
+    response.status,
+    { 400: 'La contraseña no cumple los requisitos necesarios.' },
+    'No pudimos cambiar la contraseña. Probá de nuevo.',
+  );
 }

@@ -1,7 +1,7 @@
 export const NAME_MAX_LENGTH = 30;
 export const EMAIL_MAX_LENGTH = 254;
-// Límites del registro definidos por el equipo de front. Ojo: el backend hoy exige
-// de 15 a 128, así que una contraseña de 8 a 14 pasa el formulario y vuelve con 400.
+// Límites de una contraseña nueva definidos por el equipo de front. El backend acepta
+// de 8 a 128, así que todo lo que pasa este formulario también pasa el del backend.
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 24;
 // El login acepta contraseñas más largas para no bloquear cuentas creadas con el límite del backend

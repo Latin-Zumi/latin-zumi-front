@@ -136,7 +136,7 @@ Si el usuario no existe: `404` con `{ "code": "USER_NOT_FOUND" }`.
 - **No se puede bloquear a uno mismo:** responde `422` con `{ "code": "CANNOT_BLOCK_SELF" }`.
 - **Al bloquear:**
   - se revocan las sesiones del usuario;
-  - `POST /auth/login` y `POST /auth/google` responden `403` con `{ "code": "ACCOUNT_BLOCKED" }`;
+  - `POST /auth/login` y `POST /auth/google` responden `403` con `{ "code": "USER_BLOCKED" }` (el código que ya usa el back);
   - las operaciones que ya terminaron no se tocan.
 
 ### Aplicar los parámetros

@@ -22,6 +22,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(updated);
   };
 
+  const completePasswordChange = () => {
+    if (!session) return;
+    const updated: Session = { token: session.token, user: session.user };
+    saveSession(updated);
+    setSession(updated);
+  };
+
   // Estable para no volver a disparar efectos que dependen de ella
   const logout = useCallback(async () => {
     await logoutService();
@@ -34,8 +41,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         token: session?.token ?? null,
         isAuthenticated: session !== null,
+        passwordChangeRequired: session?.password_change_required ?? false,
         startSession,
         updateUser,
+        completePasswordChange,
         logout,
       }}
     >
