@@ -11,12 +11,14 @@ import type {
   Currency,
   ExchangeQuote,
   OperationResult,
+  Transaction,
   TransactionErrorCode,
   TransactionPage,
   TransactionType,
 } from '../types';
 import { ApiConnectionError, apiRequest } from './apiClient';
 import { getSession } from './authService';
+import { toBalance, type AccountResponse } from './walletService';
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
@@ -25,6 +27,11 @@ const ERROR_MESSAGES: Record<TransactionErrorCode, string> = {
   UNAUTHORIZED: 'Tu sesión expiró. Volvé a iniciar sesión.',
   RECIPIENT_NOT_FOUND: 'No encontramos una cuenta con ese email.',
   QUOTE_EXPIRED: 'La cotización venció. Pedí una nueva.',
+  QUOTE_ALREADY_USED: 'Esa cotización ya se usó. Pedí una nueva.',
+  AMOUNT_TOO_SMALL: 'El monto es muy chico: convertido da menos de 0,01.',
+  SAME_CURRENCY: 'Elegí dos monedas distintas.',
+  CONVERSION_UNAVAILABLE: 'No hay una cotización disponible en este momento. Probá más tarde.',
+  IDEMPOTENCY_CONFLICT: 'Esta operación ya se procesó con otros datos. Empezá de nuevo.',
   INSUFFICIENT_FUNDS: 'No tenés saldo suficiente en esa moneda.',
   SELF_TRANSFER: 'No podés transferirte a vos mismo.',
   CONNECTION: 'No pudimos conectar con el servidor. Probá de nuevo.',
@@ -62,6 +69,36 @@ export interface DepositData {
 const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
+// Movimiento tal como lo devuelve el backend: sin contraparte o sin cambio vienen en null
+type TransactionResponse = Omit<Transaction, 'counterparty' | 'exchange'> & {
+  counterparty: Transaction['counterparty'] | null;
+  exchange: Transaction['exchange'] | null;
+};
+
+interface OperationResponse {
+  transaction: TransactionResponse;
+  balances: AccountResponse[];
+}
+
+function toTransaction({ counterparty, exchange, ...transaction }: TransactionResponse): Transaction {
+  return {
+    ...transaction,
+    ...(counterparty && { counterparty }),
+    ...(exchange && { exchange }),
+  };
+}
+
+// Las operaciones devuelven los saldos con el formato de GET /accounts
+function toOperationResult(body: unknown): OperationResult {
+  const { transaction, balances } = body as OperationResponse;
+  return { transaction: toTransaction(transaction), balances: balances.map(toBalance) };
+}
+
+function toTransactionPage(body: unknown): TransactionPage {
+  const { items, page, total } = body as TransactionPage & { items: TransactionResponse[] };
+  return { items: items.map(toTransaction), page, total };
+}
+
 function isErrorCode(value: unknown): value is TransactionErrorCode {
   return typeof value === 'string' && value in ERROR_MESSAGES;
 }
@@ -76,11 +113,13 @@ async function readErrorCode(response: Response): Promise<TransactionErrorCode> 
   return response.status === 401 ? 'UNAUTHORIZED' : 'UNKNOWN';
 }
 
-// Misma interfaz para el mock y el backend: las pantallas no saben cuál corre
+// Misma interfaz para el mock y el backend: las pantallas no saben cuál corre.
+// fromApi pasa la respuesta del backend al formato del front; el mock ya lo usa.
 async function request<T>(
   path: string,
   init: RequestInit,
   mock: (email: string) => MockResult<T>,
+  fromApi: (body: unknown) => T = (body) => body as T,
 ): Promise<T> {
   const session = getSession();
   if (!session) throw new TransactionError('UNAUTHORIZED');
@@ -104,7 +143,7 @@ async function request<T>(
   }
 
   if (!response.ok) throw new TransactionError(await readErrorCode(response));
-  return (await response.json()) as T;
+  return fromApi(await response.json());
 }
 
 function post(body: unknown, idempotencyKey: string): RequestInit {
@@ -132,6 +171,7 @@ export function getTransactions(filters: TransactionFilters = {}): Promise<Trans
     `/wallet/transactions${toQuery({ ...filters })}`,
     {},
     (email) => getMockTransactions(email, filters),
+    toTransactionPage,
   );
 }
 
@@ -148,6 +188,7 @@ export function transfer(data: TransferData, idempotencyKey: string): Promise<Op
     '/wallet/transfers',
     post(data, idempotencyKey),
     (email) => mockTransfer(email, data, idempotencyKey),
+    toOperationResult,
   );
 }
 
@@ -156,6 +197,7 @@ export function deposit(data: DepositData, idempotencyKey: string): Promise<Oper
     '/wallet/deposits',
     post(data, idempotencyKey),
     (email) => mockDeposit(email, data, idempotencyKey),
+    toOperationResult,
   );
 }
 
@@ -176,5 +218,6 @@ export function exchange(quoteId: string, idempotencyKey: string): Promise<Opera
     '/wallet/exchanges',
     post({ quote_id: quoteId }, idempotencyKey),
     (email) => mockExchange(email, quoteId, idempotencyKey),
+    toOperationResult,
   );
 }

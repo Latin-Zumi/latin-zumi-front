@@ -48,6 +48,58 @@ describe('transactionService con la API real', () => {
     expect(call.body).toEqual(TRANSFER);
   });
 
+  it('pasa los saldos y el movimiento de la respuesta al formato del front', async () => {
+    mockFetch(
+      jsonResponse(200, {
+        transaction: { ...makeTransaction({ type: 'deposit' }), counterparty: null, exchange: null },
+        source: { currency: 'USD', amount: '10.00', rate: '980' },
+        balances: [
+          {
+            id: 'cuenta-1',
+            user_id: TEST_SESSION.user.id,
+            wallet_id: 'billetera-1',
+            currency: 'ARS',
+            account_type: 'user',
+            allow_negative: false,
+            balance: '9800.00',
+          },
+        ],
+      }),
+    );
+
+    const result = await service.deposit({ currency: 'USD', amount: '10.00' }, 'clave-1');
+
+    expect(result.balances).toEqual([
+      { account_id: 'cuenta-1', wallet_id: 'billetera-1', currency: 'ARS', amount: '9800.00' },
+    ]);
+    // Sin contraparte ni cambio, los campos quedan ausentes en vez de null
+    expect(result.transaction).not.toHaveProperty('counterparty');
+    expect(result.transaction).not.toHaveProperty('exchange');
+  });
+
+  it('en el historial conserva el cambio y quita los null', async () => {
+    const exchange = { to_currency: 'USD' as const, to_amount: '1.02', rate: '0.00102' };
+    mockFetch(
+      jsonResponse(200, {
+        items: [
+          { ...makeTransaction({ type: 'exchange' }), counterparty: null, exchange },
+          { ...makeTransaction({ type: 'withdrawal' }), counterparty: null, exchange: null },
+        ],
+        page: 1,
+        limit: 20,
+        total: 2,
+        totalPages: 1,
+      }),
+    );
+
+    const { items, total } = await service.getTransactions();
+
+    expect(total).toBe(2);
+    expect(items[0].exchange).toEqual(exchange);
+    expect(items[0]).not.toHaveProperty('counterparty');
+    expect(items[1]).not.toHaveProperty('exchange');
+  });
+
   it('arma la URL de los filtros sin los que vienen vacíos', async () => {
     const fetchMock = mockFetch(jsonResponse(200, { items: [], page: 2, total: 0 }));
 
@@ -71,6 +123,8 @@ describe('transactionService con la API real', () => {
   it.each([
     [422, { code: 'INSUFFICIENT_FUNDS' }, 'INSUFFICIENT_FUNDS', 'No tenés saldo suficiente en esa moneda.'],
     [404, { code: 'RECIPIENT_NOT_FOUND' }, 'RECIPIENT_NOT_FOUND', 'No encontramos una cuenta con ese email.'],
+    [409, { code: 'QUOTE_ALREADY_USED' }, 'QUOTE_ALREADY_USED', 'Esa cotización ya se usó. Pedí una nueva.'],
+    [503, { code: 'CONVERSION_UNAVAILABLE' }, 'CONVERSION_UNAVAILABLE', 'No hay una cotización disponible en este momento. Probá más tarde.'],
     [401, undefined, 'UNAUTHORIZED', 'Tu sesión expiró. Volvé a iniciar sesión.'],
     [500, { code: 'ALGO_NUEVO' }, 'UNKNOWN', 'No pudimos completar la operación. Probá de nuevo.'],
   ])('con status %i y body %j falla con %s', async (status, body, code, message) => {
