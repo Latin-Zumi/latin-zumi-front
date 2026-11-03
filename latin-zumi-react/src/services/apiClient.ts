@@ -18,6 +18,16 @@ export async function apiRequest(
   }
 }
 
+// Los errores del backend traen { code, message }; algunos, como el 429, no traen code
+export async function readErrorCode(response: Response): Promise<string | undefined> {
+  try {
+    const body = (await response.json()) as { code?: unknown };
+    return typeof body.code === 'string' ? body.code : undefined;
+  } catch {
+    return undefined; // el body no es JSON
+  }
+}
+
 export function postJson(path: string, body: unknown): Promise<Response> {
   return apiRequest(path, {
     method: 'POST',

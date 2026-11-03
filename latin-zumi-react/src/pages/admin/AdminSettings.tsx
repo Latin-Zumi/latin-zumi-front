@@ -177,7 +177,7 @@ export default function AdminSettings() {
                       {formatPercent(change.old_value)} → <strong>{formatPercent(change.new_value)}</strong>
                     </span>
                     <span className="admin-history__meta">
-                      {formatTransactionDate(change.changed_at)} · {change.changed_by.nombre}
+                      {formatTransactionDate(change.changed_at)} · {change.changed_by?.nombre ?? '—'}
                     </span>
                   </li>
                 ))}

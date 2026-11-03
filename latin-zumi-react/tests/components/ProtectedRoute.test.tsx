@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import ProtectedRoute from '../../src/components/ProtectedRoute';
 import { AuthProvider } from '../../src/context/auth';
-import { storeSession } from '../helpers/api';
+import { storeSession, TEST_SESSION } from '../helpers/api';
 
 function renderAt(path: string) {
   render(
@@ -11,6 +11,7 @@ function renderAt(path: string) {
       <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route path="/login" element={<p>Pantalla de login</p>} />
+          <Route path="/cambiar-contrasena" element={<p>Pantalla de cambio de contraseña</p>} />
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<p>Pantalla del dashboard</p>} />
           </Route>
@@ -33,5 +34,13 @@ describe('ProtectedRoute', () => {
     renderAt('/dashboard');
 
     expect(screen.getByText('Pantalla del dashboard')).toBeInTheDocument();
+  });
+
+  it('si el back pide cambiar la contraseña, manda a cambiarla', () => {
+    storeSession({ ...TEST_SESSION, password_change_required: true });
+    renderAt('/dashboard');
+
+    expect(screen.getByText('Pantalla de cambio de contraseña')).toBeInTheDocument();
+    expect(screen.queryByText('Pantalla del dashboard')).not.toBeInTheDocument();
   });
 });
