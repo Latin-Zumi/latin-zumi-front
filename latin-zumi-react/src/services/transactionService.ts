@@ -70,7 +70,7 @@ const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 // Movimiento tal como lo devuelve el backend: sin contraparte o sin cambio vienen en null
-type TransactionResponse = Omit<Transaction, 'counterparty' | 'exchange'> & {
+export type TransactionResponse = Omit<Transaction, 'counterparty' | 'exchange'> & {
   counterparty: Transaction['counterparty'] | null;
   exchange: Transaction['exchange'] | null;
 };
@@ -80,7 +80,7 @@ interface OperationResponse {
   balances: AccountResponse[];
 }
 
-function toTransaction({ counterparty, exchange, ...transaction }: TransactionResponse): Transaction {
+export function toTransaction({ counterparty, exchange, ...transaction }: TransactionResponse): Transaction {
   return {
     ...transaction,
     ...(counterparty && { counterparty }),

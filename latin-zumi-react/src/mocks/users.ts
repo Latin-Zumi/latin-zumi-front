@@ -12,7 +12,12 @@ export const CURRENCY_BY_COUNTRY: Record<string, string> = {
 // Cuentas de prueba para VITE_USE_MOCK=true. Solo existen en el navegador.
 export const MOCK_PASSWORD = 'LatinZumi1!';
 
-const SEED_USERS: AuthUser[] = [
+// El panel de admin muestra desde cuándo existe cada cuenta; la sesión no lo usa
+export type MockUser = AuthUser & { created_at?: string };
+
+const SEED_CREATED_AT = '2026-10-20T12:00:00.000Z';
+
+const SEED_USERS: MockUser[] = [
   {
     id: 'mock-user-1',
     nombre: 'Valentina',
@@ -21,6 +26,7 @@ const SEED_USERS: AuthUser[] = [
     moneda_preferida: 'ARS',
     roles: ['user'],
     estado: 'activo',
+    created_at: SEED_CREATED_AT,
   },
   {
     id: 'mock-user-2',
@@ -30,6 +36,17 @@ const SEED_USERS: AuthUser[] = [
     moneda_preferida: 'COP',
     roles: ['user'],
     estado: 'activo',
+    created_at: SEED_CREATED_AT,
+  },
+  {
+    id: 'mock-admin-1',
+    nombre: 'Admin',
+    email: 'admin@latinzumi.test',
+    pais: 'Argentina',
+    moneda_preferida: 'ARS',
+    roles: ['user', 'admin'],
+    estado: 'activo',
+    created_at: SEED_CREATED_AT,
   },
 ];
 
@@ -50,12 +67,12 @@ function writeJson(key: string, value: unknown) {
   }
 }
 
-function readUsers(): Record<string, AuthUser> {
+function readUsers(): Record<string, MockUser> {
   const seed = Object.fromEntries(SEED_USERS.map((user) => [user.email, user]));
-  return { ...seed, ...readJson<AuthUser>(STORAGE_KEY) };
+  return { ...seed, ...readJson<MockUser>(STORAGE_KEY) };
 }
 
-function writeUsers(users: Record<string, AuthUser>) {
+function writeUsers(users: Record<string, MockUser>) {
   writeJson(STORAGE_KEY, users);
 }
 
@@ -91,7 +108,7 @@ export function registerMockUser(data: {
   const email = normalizeEmail(data.email);
   if (users[email]) return null;
 
-  const user: AuthUser = {
+  const user: MockUser = {
     id: nextId(),
     nombre: data.nombre,
     email,
@@ -99,6 +116,7 @@ export function registerMockUser(data: {
     moneda_preferida: CURRENCY_BY_COUNTRY[data.pais] ?? 'USD',
     roles: ['user'],
     estado: 'activo',
+    created_at: new Date().toISOString(),
   };
   writeUsers({ ...users, [email]: user });
   writeJson(PASSWORDS_KEY, { ...readJson<string>(PASSWORDS_KEY), [email]: data.password });
@@ -116,7 +134,7 @@ export function findOrCreateMockGoogleUser(data: {
   const existing = users[email];
   if (existing) return existing;
 
-  const user: AuthUser = {
+  const user: MockUser = {
     id: nextId(),
     nombre: data.nombre,
     email,
@@ -125,6 +143,7 @@ export function findOrCreateMockGoogleUser(data: {
     roles: ['user'],
     estado: 'activo',
     foto_url: data.foto_url,
+    created_at: new Date().toISOString(),
   };
   writeUsers({ ...users, [email]: user });
   return user;
@@ -140,11 +159,27 @@ export function updateMockUser(
   const current = users[key];
   if (!current) return null;
 
-  const updated: AuthUser = {
+  const updated: MockUser = {
     ...current,
     ...changes,
     moneda_preferida: CURRENCY_BY_COUNTRY[changes.pais] ?? current.moneda_preferida,
   };
   writeUsers({ ...users, [key]: updated });
+  return updated;
+}
+
+// Para el panel de admin: todos los usuarios mock
+export function listMockUsers(): MockUser[] {
+  return Object.values(readUsers());
+}
+
+// Simula el cambio de estado de PATCH /admin/users/:id
+export function setMockUserStatus(id: string, estado: string): MockUser | null {
+  const users = readUsers();
+  const current = Object.values(users).find((user) => user.id === id);
+  if (!current) return null;
+
+  const updated: MockUser = { ...current, estado };
+  writeUsers({ ...users, [current.email]: updated });
   return updated;
 }
