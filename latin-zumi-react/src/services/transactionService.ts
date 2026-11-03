@@ -36,6 +36,7 @@ const ERROR_MESSAGES: Record<TransactionErrorCode, string> = {
   WALLET_NOT_FOUND: 'No encontramos tu billetera. Cerrá sesión y volvé a ingresar.',
   ACCOUNT_NOT_FOUND: 'No encontramos la cuenta de esa moneda en tu billetera.',
   INVALID_IDEMPOTENCY_KEY: 'No pudimos procesar la operación. Empezá de nuevo.',
+  TOO_MANY_REQUESTS: 'Demasiados intentos. Esperá unos minutos.',
   INSUFFICIENT_FUNDS: 'No tenés saldo suficiente en esa moneda.',
   SELF_TRANSFER: 'No podés transferirte a vos mismo.',
   CONNECTION: 'No pudimos conectar con el servidor. Probá de nuevo.',

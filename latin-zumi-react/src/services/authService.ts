@@ -112,7 +112,7 @@ const BLOCKED_MESSAGE = 'Tu cuenta está bloqueada. Escribinos para reactivarla.
 // La lógica sale del status HTTP: el body de los errores no es uniforme (el 429 manda { error })
 function authErrorFor(status: number, messages: Record<number, string>, fallback: string): AuthError {
   if (messages[status]) return new AuthError(messages[status]);
-  // El back responde 403 USER_BLOCKED cuando un admin bloqueó la cuenta
+  // El back responde 403 ACCOUNT_BLOCKED cuando un admin bloqueó la cuenta
   if (status === 403) return new AuthError(BLOCKED_MESSAGE);
   if (status === 429) return new AuthError('Demasiados intentos. Esperá unos minutos.');
   if (status >= 500) return new AuthError('No pudimos conectar con el servidor. Probá de nuevo.');
