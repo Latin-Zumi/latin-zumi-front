@@ -10,6 +10,8 @@ import {
   TEST_SESSION,
 } from '../helpers/api';
 import { makeTransaction } from '../helpers/factories';
+import { getMockExchangeQuote } from '../../src/mocks/wallets';
+import { getCurrentRates } from '../../src/utils/dashboard';
 
 type TransactionService = typeof import('../../src/services/transactionService');
 const load = (useMock: boolean) =>
@@ -167,6 +169,23 @@ describe('transactionService en modo mock', () => {
 
   const balanceOf = (result: { balances: { currency: string; amount: string }[] }) =>
     result.balances.find((balance) => balance.currency === 'ARS')?.amount;
+
+  it('incluye el spread mock y calcula el monto recibido con la tasa ajustada', () => {
+    const result = getMockExchangeQuote(TEST_SESSION.user.email, {
+      from: 'USD',
+      to: 'ARS',
+      amount: '100.00',
+    });
+    if (!result.ok) throw new Error('No se pudo crear la cotización mock.');
+
+    const marketRate = getCurrentRates().ARS / getCurrentRates().USD;
+    const adjustedRate = marketRate * (1 - 1.5 / 100);
+    expect(result.data.spread_percent).toBe('1.50');
+    expect(Number(result.data.rate)).toBeCloseTo(adjustedRate, 6);
+    expect(Number(result.data.to_amount)).toBe(
+      Math.round(100 * Number(result.data.rate) * 100) / 100,
+    );
+  });
 
   it('repetir un depósito con la misma Idempotency-Key no lo acredita dos veces', async () => {
     const first = await run(service.deposit({ currency: 'ARS', amount: '50' }, 'misma-clave'));

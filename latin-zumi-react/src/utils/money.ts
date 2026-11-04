@@ -18,6 +18,14 @@ export function formatMoney(amount: string | number, currency: Currency): string
     ...(hasCents && { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
   }).format(value);
 }
+
+export function formatPercent(value: string | number): string {
+  const formatted = new Intl.NumberFormat('es-AR', {
+    maximumFractionDigits: 2,
+  }).format(Number(value));
+  return `${formatted} %`;
+}
+
 // Los montos se suman y comparan en centavos enteros para evitar errores de redondeo
 // (0.1 + 0.2 = 0.30000000000000004). Solo se pasan a string para mostrar o enviar.
 export function toCents(amount: string): number {

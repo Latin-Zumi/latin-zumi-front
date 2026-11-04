@@ -46,6 +46,7 @@ export interface ExchangeQuote {
   quote_id: string;
   rate: string;
   to_amount: string;
+  spread_percent?: string;
   expires_at: string;
 }
 
