@@ -1,0 +1,70 @@
+@layer components {
+  /* Debajo de los modales (z-50) y, en el celular, encima del header (z-40) */
+  .chatbot__open {
+    @apply fixed right-4 bottom-4 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg;
+
+    &:hover {
+      @apply bg-primary-hover;
+    }
+  }
+
+  .chatbot__panel {
+    @apply fixed inset-0 z-45 flex flex-col bg-surface sm:inset-auto sm:right-4 sm:bottom-4 sm:h-[32rem] sm:max-h-[calc(100dvh-2rem)] sm:w-96 sm:rounded-lg sm:border sm:border-border sm:shadow-lg;
+  }
+
+  .chatbot__header {
+    @apply flex items-center justify-between gap-4 border-b border-border px-4 py-3;
+
+    & h2 {
+      @apply m-0 text-base font-semibold;
+    }
+  }
+
+  .chatbot__log {
+    @apply flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4;
+  }
+
+  .chatbot__message {
+    @apply m-0 max-w-[85%] rounded-lg px-3 py-2 text-sm wrap-break-word whitespace-pre-wrap;
+  }
+
+  .chatbot__message--assistant {
+    @apply self-start bg-background text-foreground;
+  }
+
+  .chatbot__message--user {
+    @apply self-end bg-primary text-primary-foreground;
+  }
+
+  .chatbot__typing {
+    @apply text-muted;
+  }
+
+  .chatbot__suggestions {
+    @apply flex flex-wrap gap-2 px-4 pb-2;
+  }
+
+  .chatbot__suggestion {
+    @apply cursor-pointer rounded-full border border-border bg-transparent px-3 py-1 text-left text-xs text-foreground;
+
+    &:hover {
+      @apply bg-background;
+    }
+  }
+
+  .chatbot__error {
+    @apply mx-4 mb-2 mt-0;
+  }
+
+  .chatbot__form {
+    @apply flex items-end gap-2 border-t border-border px-4 pt-3;
+
+    & textarea {
+      @apply min-w-0 flex-1 resize-none rounded-sm border border-border bg-field px-3 py-2 text-base text-foreground sm:text-sm;
+    }
+  }
+
+  .chatbot__note {
+    @apply m-0 px-4 pt-2 pb-3 text-xs text-muted;
+  }
+}
