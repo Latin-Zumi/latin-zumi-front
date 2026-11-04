@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
+import ChatBot from "../chat/ChatBot";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
@@ -14,6 +15,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </div>
       <Footer />
+      <ChatBot />
     </div>
   );
 }
