@@ -30,7 +30,11 @@ export function convertAmount(
 }
 
 export function isIncome(transaction: Transaction): boolean {
-  return transaction.type === 'deposit' || transaction.type === 'transfer_received';
+  return (
+    transaction.type === 'deposit' ||
+    transaction.type === 'transfer_received' ||
+    transaction.type === 'interest'
+  );
 }
 
 // El cambio de moneda mueve plata entre tus saldos: no cuenta como ingreso ni como gasto

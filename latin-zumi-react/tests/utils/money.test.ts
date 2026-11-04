@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatExchangeRate,
   formatMoney,
+  formatPercent,
   fromCents,
   getAvailableAmount,
   getInsufficientFundsError,
@@ -39,6 +40,15 @@ describe('formatExchangeRate', () => {
 
   it('usa cuatro decimales cuando la cifra es chica', () => {
     expect(formatExchangeRate('USD', 'EUR', 1.0638)).toBe('1 USD = 1,0638 EUR');
+  });
+});
+
+describe('formatPercent', () => {
+  it('usa formato es-AR con hasta dos decimales y sin ceros finales', () => {
+    expect(formatPercent('1.50')).toBe('1,5 %');
+    expect(formatPercent('1.25')).toBe('1,25 %');
+    expect(formatPercent('2.00')).toBe('2 %');
+    expect(formatPercent('0')).toBe('0 %');
   });
 });
 

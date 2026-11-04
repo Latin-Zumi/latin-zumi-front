@@ -6,7 +6,17 @@ export const TRANSACTION_TYPE_LABELS: Record<TransactionType, string> = {
   transfer_received: 'Transferencia recibida',
   exchange: 'Cambio de moneda',
   withdrawal: 'Retiro',
+  interest: 'Interés',
 };
+
+// Habilitar interest cuando el backend acepte ese filtro; hoy responde 400.
+export const FILTERABLE_TRANSACTION_TYPES: readonly TransactionType[] = [
+  'deposit',
+  'transfer_sent',
+  'transfer_received',
+  'exchange',
+  'withdrawal',
+];
 
 export const TRANSACTION_STATUS_LABELS: Record<TransactionStatus, string> = {
   completed: 'Completado',

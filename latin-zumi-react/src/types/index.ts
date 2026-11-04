@@ -14,7 +14,8 @@ export type TransactionType =
   | 'transfer_sent'
   | 'transfer_received'
   | 'exchange'
-  | 'withdrawal';
+  | 'withdrawal'
+  | 'interest';
 
 export type TransactionStatus = 'completed' | 'pending' | 'failed';
 
@@ -46,6 +47,7 @@ export interface ExchangeQuote {
   quote_id: string;
   rate: string;
   to_amount: string;
+  spread_percent?: string;
   expires_at: string;
 }
 

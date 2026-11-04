@@ -7,6 +7,7 @@ import {
   CURRENCY_NAMES,
   formatExchangeRate,
   formatMoney,
+  formatPercent,
   fromCents,
   getAvailableAmount,
   getInsufficientFundsError,
@@ -208,6 +209,14 @@ export default function ExchangeModal({ isOpen, onClose, defaultCurrency }: Exch
           <p className="dashboard__muted">
             Tipo de cambio: {formatExchangeRate(pending.from, pending.to, Number(pending.quote.rate))}
           </p>
+          {pending.quote.spread_percent !== undefined && (
+            <p className="dashboard__muted">
+              Comisión:{' '}
+              {Number(pending.quote.spread_percent) === 0
+                ? 'Sin comisión'
+                : formatPercent(pending.quote.spread_percent)}
+            </p>
+          )}
           {/* Se anuncia solo el vencimiento, no cada segundo de la cuenta regresiva */}
           {isExpired ? (
             <p className="form-notice" role="status">

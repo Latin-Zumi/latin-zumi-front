@@ -69,7 +69,7 @@ Es solo comodidad: el back tiene que rechazar con `403` cualquier pedido que no 
 - [ ] Con la API real, el link y la ruta no aparecen.
 
 ## Riesgos / notas
-- **Los parámetros no tienen efecto en el front todavía.** El mock no aplica el spread a las cotizaciones ni acredita intereses. Eso lo hace el back (pasos 5 y 6 de su spec).
+- **Los parámetros del panel no se conectan al mock.** Las cotizaciones mock usan un spread de ejemplo fijo de 1,50 % para mostrar la comisión; el porcentaje configurable del panel solo se aplica en el backend. El mock tampoco acredita intereses.
 - **Tipo de movimiento `interest`:** cuando el back acredite intereses, aparecerá en el historial y hay que sumarle la etiqueta.
 - **En el mock, un usuario bloqueado todavía puede entrar.** El rechazo del login lo hace el back.
 - **CORS:** guardar parámetros y bloquear usuarios usan `PATCH`, que hoy el CORS del back no permite.

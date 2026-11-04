@@ -93,6 +93,7 @@ function createSeedWallet(walletId: string): MockWallet {
       created_at: daysAgo(1, 16),
       counterparty: { nombre: 'Lucía', email: 'lucia@ejemplo.test' },
     }),
+    createTransaction('interest', 'USD', 500, 'Interés ganado', { created_at: daysAgo(0, 10) }),
   ];
 
   const balances = Object.fromEntries(CURRENCIES.map((currency) => [currency, 0])) as Record<Currency, number>;
@@ -236,14 +237,16 @@ export function getMockExchangeQuote(
   if (cents === null || data.from === data.to) return fail('INVALID_AMOUNT');
 
   const rates = getCurrentRates();
-  const rate = rates[data.to] / rates[data.from];
+  const spreadPercent = '1.50';
+  const rate = (rates[data.to] / rates[data.from]) * (1 - Number(spreadPercent) / 100);
+  const rateText = rate.toPrecision(8);
   const quote = {
     email: email.toLowerCase(),
     from: data.from,
     to: data.to,
     cents,
-    toCents: Math.round(cents * rate),
-    rate: rate.toPrecision(8),
+    toCents: Math.round(cents * Number(rateText)),
+    rate: rateText,
     expiresAt: Date.now() + QUOTE_TTL_MS,
   };
   const quoteId = crypto.randomUUID();
@@ -253,6 +256,7 @@ export function getMockExchangeQuote(
     quote_id: quoteId,
     rate: quote.rate,
     to_amount: fromCents(quote.toCents),
+    spread_percent: spreadPercent,
     expires_at: new Date(quote.expiresAt).toISOString(),
   });
 }
