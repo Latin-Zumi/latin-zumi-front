@@ -46,6 +46,67 @@
     }
   }
 
+  .wallet-rates {
+    @apply flex flex-col gap-5 rounded-lg border border-border bg-card p-5 shadow-sm;
+  }
+
+  .wallet-rates__heading {
+    @apply flex flex-col gap-1;
+
+    & h2 {
+      @apply m-0 text-2xl font-bold;
+      font-family: var(--font-display);
+      letter-spacing: -0.02em;
+    }
+
+    & p {
+      @apply m-0 text-sm text-muted;
+    }
+  }
+
+  .wallet-rates__content {
+    @apply grid gap-6;
+  }
+
+  .wallet-rates__subheading {
+    @apply m-0 mb-2 text-base font-semibold;
+  }
+
+  .wallet-rates__list {
+    @apply m-0 flex flex-col divide-y divide-border;
+  }
+
+  .wallet-rates__row,
+  .wallet-rates__cost {
+    @apply flex items-center justify-between gap-4 py-3;
+
+    & dt {
+      @apply text-sm text-muted;
+    }
+
+    & dd {
+      @apply m-0 text-right text-sm font-semibold text-foreground;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .wallet-rates__empty {
+    @apply m-0 py-3 text-sm text-muted;
+  }
+
+  .wallet-rates__costs {
+    @apply m-0 grid grid-cols-2 gap-3 border-t border-border pt-3;
+  }
+
+  .wallet-rates__cost {
+    @apply flex-col items-start gap-1 py-0;
+
+    & dd {
+      @apply text-xl;
+      font-family: var(--font-display);
+    }
+  }
+
   .dashboard__section-heading {
     @apply flex flex-wrap items-baseline justify-between gap-4;
 
@@ -230,6 +291,18 @@
     .dashboard__content {
       grid-template-columns: minmax(0, 1.7fr) minmax(18rem, 1fr);
       align-items: start;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .wallet-rates__content {
+      grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.65fr);
+      align-items: start;
+    }
+
+    .wallet-rates__costs {
+      @apply border-t-0 border-l pl-5 pt-0;
+      grid-template-columns: 1fr;
     }
   }
 
