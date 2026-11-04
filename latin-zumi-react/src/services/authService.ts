@@ -42,7 +42,7 @@ export interface Session {
 
 export class AuthError extends Error {}
 
-// La función existe en la app pero el backend todavía no la ofrece
+// Se usa si el backend desplegado todavía no expone o no habilita el endpoint de Google
 export class AuthUnavailableError extends AuthError {}
 
 export function isProfileComplete(user: AuthUser): boolean {
