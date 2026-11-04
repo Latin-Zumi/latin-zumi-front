@@ -1,4 +1,3 @@
-import { getRateHistory } from '../services/ratesService';
 import type { Currency, Transaction } from '../types';
 import { toCents } from './money';
 
@@ -10,16 +9,7 @@ export interface ActivityDay {
 
 export type CurrencyRates = Record<Currency, number>;
 
-export function getCurrentRates(): CurrencyRates {
-  return {
-    USD: 1,
-    ARS: getRateHistory('ARS', 1)[0].value,
-    COP: getRateHistory('COP', 1)[0].value,
-    EUR: getRateHistory('EUR', 1)[0].value,
-  };
-}
-
-// Las conversiones entre monedas son estimadas (cotizaciones simuladas), solo para mostrar
+// Las conversiones entre monedas son estimadas, solo para mostrar
 export function convertAmount(
   amount: number,
   from: Currency,

@@ -85,13 +85,17 @@
     }
 
     & dd {
-      @apply m-0 text-right text-sm font-semibold text-foreground;
+      @apply m-0 text-right text-sm font-semibold whitespace-nowrap text-foreground;
       font-variant-numeric: tabular-nums;
     }
   }
 
-  .wallet-rates__empty {
-    @apply m-0 py-3 text-sm text-muted;
+  .wallet-rates__status {
+    @apply m-0 text-sm text-muted;
+  }
+
+  .wallet-rates__error {
+    @apply flex flex-col items-start gap-3;
   }
 
   .wallet-rates__costs {

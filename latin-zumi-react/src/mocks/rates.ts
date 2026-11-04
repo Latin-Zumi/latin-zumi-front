@@ -1,4 +1,5 @@
-import type { Currency } from '../types';
+import type { Currency, WalletRates } from '../types';
+import { readMockSettings } from './settings';
 
 export interface RatePoint {
   date: string; // YYYY-MM-DD
@@ -45,3 +46,23 @@ export const mockRateHistory: Record<QuotedCurrency, RatePoint[]> = {
   ARS: buildHistory(980, 0.0025, 0.012, 21),
   COP: buildHistory(4200, -0.0006, 0.014, 42),
 };
+
+export function getMockCurrentRates(): Record<Currency, number> {
+  return {
+    USD: 1,
+    ARS: mockRateHistory.ARS[DAYS - 1].value,
+    COP: mockRateHistory.COP[DAYS - 1].value,
+    EUR: mockRateHistory.EUR[DAYS - 1].value,
+  };
+}
+
+// Simula GET /wallet/rates
+export function getMockWalletRates(): WalletRates {
+  const { exchange_spread_percent, interest_rates } = readMockSettings();
+  return {
+    rates: getMockCurrentRates(),
+    observed_at: new Date().toISOString(),
+    exchange_spread_percent,
+    interest_rates,
+  };
+}

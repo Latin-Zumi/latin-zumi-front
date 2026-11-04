@@ -8,8 +8,9 @@ import type {
   TransactionPage,
   TransactionType,
 } from '../types';
-import { getCurrentRates } from '../utils/dashboard';
 import { fromCents, parseAmountInput, toCents } from '../utils/money';
+import { getMockCurrentRates } from './rates';
+import { readMockSettings } from './settings';
 import { findMockUser } from './users';
 
 // Simula los endpoints de /wallet guardando billeteras por email en localStorage.
@@ -249,8 +250,8 @@ export function getMockExchangeQuote(
   const cents = parseAmountInput(data.amount);
   if (cents === null || data.from === data.to) return fail('INVALID_AMOUNT');
 
-  const rates = getCurrentRates();
-  const spreadPercent = '1.50';
+  const rates = getMockCurrentRates();
+  const spreadPercent = readMockSettings().exchange_spread_percent;
   const rate = (rates[data.to] / rates[data.from]) * (1 - Number(spreadPercent) / 100);
   const rateText = rate.toPrecision(8);
   const quote = {

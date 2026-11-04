@@ -14,6 +14,7 @@ import type {
 } from '../types/admin';
 import { fromCents, toCents } from '../utils/money';
 import { findMockUser, listMockUsers, setMockUserStatus, type MockUser } from './users';
+import { readMockSettings, SETTINGS_KEY } from './settings';
 import { getMockBalances, getMockTransactions } from './wallets';
 
 // Simula los endpoints de /admin. Los parámetros y su historial se guardan en localStorage.
@@ -21,16 +22,8 @@ export type AdminMockResult<T> =
   | { ok: true; data: T }
   | { ok: false; code: AdminErrorCode };
 
-const SETTINGS_KEY = 'latin-zumi:mock-admin-settings';
 const HISTORY_KEY = 'latin-zumi:mock-admin-history';
 const CURRENCIES: Currency[] = ['ARS', 'COP', 'USD', 'EUR'];
-
-const DEFAULT_SETTINGS: AdminSettings = {
-  exchange_spread_percent: '0.00',
-  interest_rates: CURRENCIES.map((currency) => ({ currency, annual_percent: '0.00' })),
-  updated_at: null,
-  updated_by: null,
-};
 
 const ok = <T>(data: T): AdminMockResult<T> => ({ ok: true, data });
 const fail = (code: AdminErrorCode): AdminMockResult<never> => ({ ok: false, code });
@@ -123,7 +116,7 @@ export function getMockAdminMetrics(email: string, period: MetricsPeriod): Admin
 // Simula GET /admin/settings
 export function getMockAdminSettings(email: string): AdminMockResult<AdminSettings> {
   if (!isAdmin(email)) return fail('FORBIDDEN');
-  return ok(readJson(SETTINGS_KEY, DEFAULT_SETTINGS));
+  return ok(readMockSettings());
 }
 
 // Simula PATCH /admin/settings: guarda en el historial cada campo que cambió
@@ -134,7 +127,7 @@ export function updateMockAdminSettings(
   const admin = findMockUser(email);
   if (!admin?.roles.includes('admin')) return fail('FORBIDDEN');
 
-  const current = readJson(SETTINGS_KEY, DEFAULT_SETTINGS);
+  const current = readMockSettings();
   const actor: AdminActor = { nombre: admin.nombre, email: admin.email };
   const changedAt = new Date().toISOString();
   const history: SettingsChange[] = [];
