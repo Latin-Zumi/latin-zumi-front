@@ -310,6 +310,7 @@ export default function Dashboard() {
                         <span
                           className={`dashboard__movement-amount${tone && ` dashboard__movement-amount${tone}`}`}
                         >
+                          {income && <span aria-hidden="true">↓ </span>}
                           {income ? '+' : '−'}
                           {formatMoney(transaction.amount, transaction.currency)}
                           {exchange && ` → +${formatMoney(exchange.to_amount, exchange.to_currency)}`}

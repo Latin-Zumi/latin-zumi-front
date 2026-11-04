@@ -93,6 +93,7 @@ function createSeedWallet(walletId: string): MockWallet {
       created_at: daysAgo(1, 16),
       counterparty: { nombre: 'Lucía', email: 'lucia@ejemplo.test' },
     }),
+    createTransaction('interest', 'USD', 500, 'Interés ganado', { created_at: daysAgo(0, 10) }),
   ];
 
   const balances = Object.fromEntries(CURRENCIES.map((currency) => [currency, 0])) as Record<Currency, number>;

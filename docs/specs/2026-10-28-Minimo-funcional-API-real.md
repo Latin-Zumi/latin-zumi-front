@@ -17,6 +17,7 @@ El backend ya tiene listo el mínimo funcional (registro, login, cuentas y logou
   - El Dashboard llama a `/wallet/transactions`, `/wallet/transfers`, etc.
 
   Todos responden `404`.
+  - La pantalla `/historial` solo muestra movimientos en modo mock y los identifica como datos de prueba. En modo API informa que el historial no está disponible; no llama a `/wallet/transactions` hasta que el backend publique ese endpoint.
 
 Referencia: documentos del backend `2026-10-28-1230-Minimo-Funcional-Frontend.md` y `2026-10-28-1146-Minimo-Funcional-Revision-Backend.md`.
 

@@ -14,7 +14,8 @@ export type TransactionType =
   | 'transfer_sent'
   | 'transfer_received'
   | 'exchange'
-  | 'withdrawal';
+  | 'withdrawal'
+  | 'interest';
 
 export type TransactionStatus = 'completed' | 'pending' | 'failed';
 
