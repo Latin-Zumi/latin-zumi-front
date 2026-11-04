@@ -1,8 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { TRANSACTIONS_ENABLED } from '../config/features';
-import { useWallet } from '../context/wallet';
+import { useAuth } from '../context/auth';
 import { ErrorState, LoadingState } from '../components/states';
+import Button from '../components/ui/Button';
+import {
+  TransactionError,
+  getTransactions,
+  type TransactionFilters,
+} from '../services/transactionService';
 import { CURRENCY_NAMES, formatMoney } from '../utils/money';
 import { isIncome } from '../utils/dashboard';
 import {
@@ -12,56 +18,178 @@ import {
   TRANSACTION_STATUS_LABELS,
   TRANSACTION_TYPE_LABELS,
 } from '../utils/transactions';
-import type { Currency, Transaction } from '../types';
+import type { Currency, TransactionPage, TransactionType } from '../types';
 
 const CURRENCIES: Currency[] = ['ARS', 'COP', 'USD', 'EUR'];
+const PAGE_SIZE = 20;
 
-function isWithinDateRange(transaction: Transaction, from: string, to: string): boolean {
-  const timestamp = new Date(transaction.created_at).getTime();
-  const fromTimestamp = from ? new Date(`${from}T00:00:00`).getTime() : Number.NEGATIVE_INFINITY;
-  const toTimestamp = to ? new Date(`${to}T23:59:59.999`).getTime() : Number.POSITIVE_INFINITY;
-  return timestamp >= fromTimestamp && timestamp <= toTimestamp;
+interface HistoryFilters {
+  type: TransactionType | '';
+  currency: Currency | '';
+  from: string; // fecha local del input: "2026-11-04"
+  to: string;
+  page: number;
+}
+
+interface HistoryResult {
+  filters: HistoryFilters;
+  page?: TransactionPage;
+  error?: string;
+}
+
+const INITIAL_FILTERS: HistoryFilters = { type: '', currency: '', from: '', to: '', page: 1 };
+
+// El back espera instantes con zona horaria; el día elegido es el del usuario
+function toRequest({ type, currency, from, to, page }: HistoryFilters): TransactionFilters {
+  return {
+    type: type || undefined,
+    currency: currency || undefined,
+    from: from ? new Date(`${from}T00:00:00`).toISOString() : undefined,
+    to: to ? new Date(`${to}T23:59:59.999`).toISOString() : undefined,
+    page,
+    limit: PAGE_SIZE,
+  };
 }
 
 export default function TransactionHistory() {
-  const wallet = useWallet();
-  const [type, setType] = useState('');
-  const [currency, setCurrency] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const { logout } = useAuth();
+  const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [result, setResult] = useState<HistoryResult | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
-  const transactions = useMemo(
-    () =>
-      [...wallet.transactions]
-        .filter((transaction) =>
-          (!type || transaction.type === type) &&
-          (!currency || transaction.currency === currency) &&
-          isWithinDateRange(transaction, from, to),
-        )
-        .sort(
-          (first, second) =>
-            new Date(second.created_at).getTime() -
-            new Date(first.created_at).getTime(),
-        ),
-    [currency, from, to, type, wallet.transactions],
-  );
+  const hasInvertedDates = Boolean(filters.from && filters.to && filters.from > filters.to);
 
-  if (wallet.isLoading) {
-    return (
-      <main className="transaction-history">
-        <LoadingState message="Cargando el historial de movimientos..." />
-      </main>
-    );
+  useEffect(() => {
+    if (!TRANSACTIONS_ENABLED || hasInvertedDates) return;
+    let ignore = false; // descarta la respuesta si cambiaron los filtros mientras cargaba
+    getTransactions(toRequest(filters))
+      .then((page) => {
+        if (!ignore) setResult({ filters, page });
+      })
+      .catch((caught: unknown) => {
+        if (ignore) return;
+        setResult({
+          filters,
+          error: caught instanceof Error ? caught.message : 'Probá de nuevo.',
+        });
+        // Token vencido o revocado: sin sesión, ProtectedRoute manda a /login
+        if (caught instanceof TransactionError && caught.code === 'UNAUTHORIZED') void logout();
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [filters, attempt, hasInvertedDates, logout]);
+
+  const current = result?.filters === filters ? result : null;
+  const totalPages = current?.page ? Math.max(1, Math.ceil(current.page.total / PAGE_SIZE)) : 1;
+  const hasActiveFilters = Boolean(filters.type || filters.currency || filters.from || filters.to);
+
+  // Cambiar un filtro vuelve a la primera página
+  function updateFilters(changes: Partial<Omit<HistoryFilters, 'page'>>) {
+    setFilters({ ...filters, ...changes, page: 1 });
   }
 
-  if (wallet.error) {
-    return (
-      <main className="transaction-history">
-        <ErrorState
-          message={`No se pudo cargar el historial de movimientos. ${wallet.error}`}
-          onRetry={() => void wallet.reload()}
-        />
-      </main>
+  function retry() {
+    setResult(null);
+    setAttempt((value) => value + 1);
+  }
+
+  let content;
+  if (hasInvertedDates) {
+    content = (
+      <p className="form-error" role="alert">
+        La fecha "Desde" no puede ser posterior a la fecha "Hasta".
+      </p>
+    );
+  } else if (current?.error) {
+    content = (
+      <ErrorState
+        message={`No se pudo cargar el historial de movimientos. ${current.error}`}
+        onRetry={retry}
+      />
+    );
+  } else if (!current?.page) {
+    content = <LoadingState message="Cargando el historial de movimientos..." />;
+  } else if (current.page.items.length === 0) {
+    content = hasActiveFilters ? (
+      <section className="transaction-history__empty" role="status">
+        <h2>No hay movimientos que coincidan</h2>
+        <p>Probá con otros filtros para ver tus operaciones.</p>
+      </section>
+    ) : (
+      <section className="transaction-history__empty" role="status">
+        <h2>Todavía no hay movimientos</h2>
+        <p>Cuando realices operaciones, aparecerán aquí.</p>
+      </section>
+    );
+  } else {
+    content = (
+      <>
+        <ul className="transaction-history__list">
+          {current.page.items.map((transaction) => {
+            const income = isIncome(transaction);
+            const isExchange = Boolean(transaction.exchange);
+            const amountClass = isExchange
+              ? 'transaction-history__amount transaction-history__amount--neutral'
+              : income
+                ? 'transaction-history__amount transaction-history__amount--income'
+                : 'transaction-history__amount';
+
+            return (
+              <li className="transaction-history__item" key={transaction.id}>
+                <span
+                  className={`transaction-history__icon${income ? ' transaction-history__icon--income' : isExchange ? ' transaction-history__icon--neutral' : ''}`}
+                  aria-hidden="true"
+                >
+                  {isExchange ? '⇄' : income ? '↓' : '↑'}
+                </span>
+                <div className="transaction-history__details">
+                  <strong>{getTransactionDescription(transaction)}</strong>
+                  <span>
+                    {TRANSACTION_TYPE_LABELS[transaction.type]} · {formatTransactionDate(transaction.created_at)}
+                  </span>
+                </div>
+                <div className="transaction-history__value">
+                  <strong className={amountClass}>
+                    {income ? '+' : '−'}{formatMoney(transaction.amount, transaction.currency)}
+                  </strong>
+                  {transaction.exchange && (
+                    <span className="transaction-history__exchange">
+                      +{formatMoney(transaction.exchange.to_amount, transaction.exchange.to_currency)}
+                    </span>
+                  )}
+                </div>
+                <span className={`transaction-history__status transaction-history__status--${transaction.status}`}>
+                  {TRANSACTION_STATUS_LABELS[transaction.status]}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+        {totalPages > 1 && (
+          <nav className="transaction-history__pagination" aria-label="Páginas">
+            <Button
+              variant="solid"
+              size="sm"
+              outline
+              disabled={filters.page <= 1}
+              onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
+            >
+              Anterior
+            </Button>
+            <span>Página {filters.page} de {totalPages} · {current.page.total} movimientos</span>
+            <Button
+              variant="solid"
+              size="sm"
+              outline
+              disabled={filters.page >= totalPages}
+              onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+            >
+              Siguiente
+            </Button>
+          </nav>
+        )}
+      </>
     );
   }
 
@@ -98,7 +226,10 @@ export default function TransactionHistory() {
           <section className="transaction-history__filters" aria-label="Filtrar movimientos">
             <label>
               Tipo de movimiento
-              <select value={type} onChange={(event) => setType(event.target.value)}>
+              <select
+                value={filters.type}
+                onChange={(event) => updateFilters({ type: event.target.value as HistoryFilters['type'] })}
+              >
                 <option value="">Todos los tipos</option>
                 {FILTERABLE_TRANSACTION_TYPES.map((value) => (
                   <option key={value} value={value}>{TRANSACTION_TYPE_LABELS[value]}</option>
@@ -107,7 +238,10 @@ export default function TransactionHistory() {
             </label>
             <label>
               Moneda
-              <select value={currency} onChange={(event) => setCurrency(event.target.value)}>
+              <select
+                value={filters.currency}
+                onChange={(event) => updateFilters({ currency: event.target.value as HistoryFilters['currency'] })}
+              >
                 <option value="">Todas las monedas</option>
                 {CURRENCIES.map((item) => (
                   <option key={item} value={item}>{CURRENCY_NAMES[item]} ({item})</option>
@@ -116,67 +250,23 @@ export default function TransactionHistory() {
             </label>
             <label>
               Desde
-              <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
+              <input
+                type="date"
+                value={filters.from}
+                onChange={(event) => updateFilters({ from: event.target.value })}
+              />
             </label>
             <label>
               Hasta
-              <input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
+              <input
+                type="date"
+                value={filters.to}
+                onChange={(event) => updateFilters({ to: event.target.value })}
+              />
             </label>
           </section>
 
-          {wallet.transactions.length === 0 ? (
-            <section className="transaction-history__empty" role="status">
-              <h2>Todavía no hay movimientos</h2>
-              <p>Cuando realices operaciones, aparecerán aquí.</p>
-            </section>
-          ) : transactions.length === 0 ? (
-            <section className="transaction-history__empty" role="status">
-              <h2>No hay movimientos que coincidan</h2>
-              <p>Probá con otros filtros para ver tus operaciones.</p>
-            </section>
-          ) : (
-            <ul className="transaction-history__list">
-              {transactions.map((transaction) => {
-                const income = isIncome(transaction);
-                const isExchange = Boolean(transaction.exchange);
-                const amountClass = isExchange
-                  ? 'transaction-history__amount transaction-history__amount--neutral'
-                  : income
-                    ? 'transaction-history__amount transaction-history__amount--income'
-                    : 'transaction-history__amount';
-
-                return (
-                  <li className="transaction-history__item" key={transaction.id}>
-                    <span
-                      className={`transaction-history__icon${income ? ' transaction-history__icon--income' : isExchange ? ' transaction-history__icon--neutral' : ''}`}
-                      aria-hidden="true"
-                    >
-                      {isExchange ? '⇄' : income ? '↓' : '↑'}
-                    </span>
-                    <div className="transaction-history__details">
-                      <strong>{getTransactionDescription(transaction)}</strong>
-                      <span>
-                        {TRANSACTION_TYPE_LABELS[transaction.type]} · {formatTransactionDate(transaction.created_at)}
-                      </span>
-                    </div>
-                    <div className="transaction-history__value">
-                      <strong className={amountClass}>
-                        {income ? '+' : '−'}{formatMoney(transaction.amount, transaction.currency)}
-                      </strong>
-                      {transaction.exchange && (
-                        <span className="transaction-history__exchange">
-                          +{formatMoney(transaction.exchange.to_amount, transaction.exchange.to_currency)}
-                        </span>
-                      )}
-                    </div>
-                    <span className={`transaction-history__status transaction-history__status--${transaction.status}`}>
-                      {TRANSACTION_STATUS_LABELS[transaction.status]}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          {content}
         </>
       )}
     </main>
