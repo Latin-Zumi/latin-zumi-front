@@ -68,7 +68,7 @@ Es solo comodidad: el back tiene que rechazar con `403` cualquier pedido que no 
 - [x] Guardar parámetros envía solo los campos que cambiaron; sin cambios, muestra un aviso y no hace una petición.
 - [x] Una comisión de `12` o `1,555` → muestra el error y no guarda.
 - [x] Bloquear a un usuario → cambia su estado en el listado. Sobre uno mismo, el botón no aparece.
-- [ ] Con la API real, el link y la ruta no aparecen.
+- [ ] Con la API real: ver `2026-11-04-Prender-panel-admin.md`.
 
 ## Riesgos / notas
 - **Los parámetros del panel no se conectan al mock.** Las cotizaciones mock usan un spread de ejemplo fijo de 1,50 % para mostrar la comisión; el porcentaje configurable del panel solo se aplica en el backend. El mock tampoco acredita intereses.

@@ -44,7 +44,7 @@ Revisión del 2026-11-04: Render ya tiene `/admin/*` (responde `401` sin token) 
 
 1. Confirmar las migraciones `012_admin.sql` y `013_idempotency_per_user.sql` en Neon.
 2. Confirmar un usuario con rol `admin`.
-3. Habilitar el panel para la API real; el código actual lo limita al modo mock.
+3. Habilitar el panel para la API real: ver `2026-11-04-Prender-panel-admin.md`.
 
 Las métricas de "hoy" cuentan las últimas 24 horas, no el día en curso.
 
