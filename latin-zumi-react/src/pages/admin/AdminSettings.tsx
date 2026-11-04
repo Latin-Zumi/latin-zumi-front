@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import AdminError from '../../components/admin/AdminError';
 import { LoadingState } from '../../components/states';
 import Button from '../../components/ui/Button';
@@ -45,6 +45,7 @@ export default function AdminSettings() {
   const [notice, setNotice] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     let ignore = false;
@@ -66,7 +67,7 @@ export default function AdminSettings() {
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!settings || isSaving) return;
+    if (!settings || isSaving || savingRef.current) return;
     setNotice('');
     setSaveError('');
 
@@ -79,18 +80,50 @@ export default function AdminSettings() {
       return { currency, annual_percent: annual ?? '' };
     });
     setErrors(nextErrors);
-    if (spread === null || Object.keys(nextErrors).length > 0) return;
+    if (Object.keys(nextErrors).length > 0 || spread === null) return;
 
+    const changes: Parameters<typeof updateSettings>[0] = {};
+    const originalSpread = parsePercentInput(
+      settings.exchange_spread_percent,
+      MAX_SPREAD_PERCENT,
+    );
+    if (spread !== originalSpread) {
+      changes.exchange_spread_percent = spread;
+    }
+    const changedRates = rates.flatMap((rate) => {
+      const originalRate = settings.interest_rates.find(
+        (item) => item.currency === rate.currency,
+      );
+      const originalAnnual = originalRate
+        ? parsePercentInput(originalRate.annual_percent, MAX_INTEREST_PERCENT)
+        : null;
+      return rate.annual_percent !== originalAnnual
+        ? [{ currency: rate.currency, annual_percent: rate.annual_percent ?? '' }]
+        : [];
+    });
+    if (changedRates.length > 0) changes.interest_rates = changedRates;
+
+    if (Object.keys(changes).length === 0) {
+      setNotice('No hay cambios para guardar');
+      return;
+    }
+
+    savingRef.current = true;
     setIsSaving(true);
     try {
-      const updated = await updateSettings({ exchange_spread_percent: spread, interest_rates: rates });
+      const updated = await updateSettings(changes);
       setSettings(updated);
       setValues(toFormValues(updated));
-      setHistory((await getSettingsHistory()).items);
       setNotice('Guardamos los parámetros.');
+      try {
+        setHistory((await getSettingsHistory()).items);
+      } catch {
+        setNotice('Guardamos los parámetros, pero no pudimos actualizar el historial.');
+      }
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'No pudimos guardar los parámetros.');
     } finally {
+      savingRef.current = false;
       setIsSaving(false);
     }
   }
@@ -121,6 +154,7 @@ export default function AdminSettings() {
                 inputMode="decimal"
                 value={values.spread}
                 error={errors.spread}
+                disabled={isSaving}
                 onChange={(event) => setValues({ ...values, spread: event.target.value })}
               />
               <p className="admin-card__note">
@@ -138,6 +172,7 @@ export default function AdminSettings() {
                     inputMode="decimal"
                     value={values.rates[currency] ?? ''}
                     error={errors[currency]}
+                    disabled={isSaving}
                     onChange={(event) =>
                       setValues({ ...values, rates: { ...values.rates, [currency]: event.target.value } })
                     }
@@ -151,6 +186,7 @@ export default function AdminSettings() {
 
             {saveError && <p className="form-error" role="alert">{saveError}</p>}
             {notice && <p className="form-notice" role="status">{notice}</p>}
+            {isSaving && <p className="form-notice" role="status">Guardando parámetros…</p>}
 
             <div className="admin-settings__footer">
               {settings.updated_at && settings.updated_by && (

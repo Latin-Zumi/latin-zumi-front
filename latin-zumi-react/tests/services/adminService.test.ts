@@ -69,6 +69,40 @@ describe('adminService con la API real', () => {
     expect(updated.exchange_spread_percent).toBe('1.50');
   });
 
+  it('el PATCH acepta un solo parámetro y omite los demás del payload', async () => {
+    const fetchMock = mockFetch(
+      jsonResponse(200, {
+        data: {
+          exchange_spread_percent: '2.00',
+          interest_rates: [{ currency: 'USD', annual_percent: '4.00' }],
+        },
+      }),
+    );
+
+    await service.updateSettings({ exchange_spread_percent: '2.00' });
+
+    const call = fetchCall(fetchMock);
+    expect(call.method).toBe('PATCH');
+    expect(call.body).toEqual({ exchange_spread_percent: '2.00' });
+  });
+
+  it('el PATCH manda solo las monedas de interés modificadas', async () => {
+    const fetchMock = mockFetch(
+      jsonResponse(200, {
+        data: {
+          exchange_spread_percent: '1.50',
+          interest_rates: [{ currency: 'USD', annual_percent: '5.00' }],
+        },
+      }),
+    );
+
+    await service.updateSettings({
+      interest_rates: [{ currency: 'USD', annual_percent: '5.00' }],
+    });
+
+    expect(fetchCall(fetchMock).body).toEqual({ interest_rates: { USD: '5.00' } });
+  });
+
   it('la búsqueda de usuarios no manda los filtros vacíos', async () => {
     const fetchMock = mockFetch(jsonResponse(200, { data: { items: [], page: 1, total: 0 } }));
 
