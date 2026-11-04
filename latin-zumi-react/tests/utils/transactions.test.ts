@@ -12,9 +12,9 @@ const at = (day: number, hour: number) => new Date(2026, 9, day, hour, 0).toISOS
 const NOW = new Date(2026, 9, 29, 18, 0); // jueves 29 de octubre
 
 describe('tipos de movimiento', () => {
-  it('etiqueta el interés y lo excluye de las opciones filtrables', () => {
+  it('etiqueta el interés y lo incluye en las opciones filtrables', () => {
     expect(TRANSACTION_TYPE_LABELS.interest).toBe('Interés');
-    expect(FILTERABLE_TRANSACTION_TYPES).not.toContain('interest');
+    expect(FILTERABLE_TRANSACTION_TYPES).toContain('interest');
   });
 });
 

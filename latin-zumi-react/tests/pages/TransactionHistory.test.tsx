@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -68,12 +68,19 @@ describe('TransactionHistory', () => {
     expect(screen.queryByRole('note')).not.toBeInTheDocument();
   });
 
-  it('no ofrece filtrar por interés, porque el back rechaza ese tipo', async () => {
+  it('permite filtrar por interés', async () => {
     renderHistory();
     await screen.findByText('Interés ganado');
 
     const typeFilter = screen.getByRole('combobox', { name: 'Tipo de movimiento' });
-    expect(within(typeFilter).queryByRole('option', { name: 'Interés' })).not.toBeInTheDocument();
+    await userEvent.setup().selectOptions(
+      typeFilter,
+      within(typeFilter).getByRole('option', { name: 'Interés' }),
+    );
+
+    await waitFor(() =>
+      expect(getTransactionsMock).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'interest' })),
+    );
   });
 
   it('muestra la carga mientras espera al back', () => {
