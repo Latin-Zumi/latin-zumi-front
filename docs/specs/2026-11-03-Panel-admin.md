@@ -4,7 +4,7 @@
 2026-11-03
 
 ## Problema
-El navbar ya muestra "Panel admin" a los usuarios con rol `admin`, y `Layout` deja afuera las rutas `/admin`, pensando en un layout propio para el panel. Pero la ruta `/admin` no existe: el link manda al inicio.
+Estado inicial que motivó el panel: el navbar mostraba "Panel admin" a los usuarios con rol `admin`, pero la ruta `/admin` todavía no existía y el link mandaba al inicio. El panel descrito abajo ya está implementado.
 
 El equipo quiere un panel para:
 - ajustar los parámetros de la plata: el interés por moneda y la comisión de los cambios;
@@ -18,6 +18,7 @@ Un panel con tres secciones. Usa el contrato de `2026-11-03-Panel-admin-backend.
 - **`/admin/parametros`: Parámetros.**
   - Formulario con la comisión de los cambios y el interés anual de cada moneda.
   - Los porcentajes aceptan coma o punto, con hasta 2 decimales: la comisión de 0 a 10 y el interés de 0 a 50.
+  - El guardado compara contra la última respuesta exitosa y envía solo los parámetros modificados. Si no hay cambios, informa al administrador y no hace una petición.
   - Debajo, el historial de cambios.
 - **`/admin/usuarios`: Usuarios.**
   - Búsqueda por nombre o email y filtro por estado, con paginado.
@@ -31,7 +32,7 @@ El panel tiene un layout propio (`AdminLayout`): la marca, las pestañas de las 
 
 Es solo comodidad: el back tiene que rechazar con `403` cualquier pedido que no venga de un admin.
 
-**Flag `ADMIN_ENABLED`:** igual a `VITE_USE_MOCK` hasta que back tenga los endpoints. Con la API real no se muestran ni el link ni la ruta.
+**Flag `ADMIN_ENABLED`:** actualmente vale `true` solo con `VITE_USE_MOCK=true`; por eso el link y las rutas del panel se ocultan con API real. Habilitarlos en modo real depende de confirmar que el backend desplegado tiene las rutas `/admin/*` y las migraciones requeridas.
 
 **Mock:**
 - usuario `admin@latinzumi.test`, con la misma contraseña de prueba que los demás;
@@ -64,12 +65,13 @@ Es solo comodidad: el back tiene que rechazar con `403` cualquier pedido que no 
 - [x] Con un usuario sin rol admin, ir a `/admin` → redirige a `/dashboard`.
 - [x] Sin sesión, ir a `/admin` → redirige a `/login`.
 - [x] Guardar una comisión de `1,5` → queda `1,50 %` y aparece en el historial.
+- [x] Guardar parámetros envía solo los campos que cambiaron; sin cambios, muestra un aviso y no hace una petición.
 - [x] Una comisión de `12` o `1,555` → muestra el error y no guarda.
 - [x] Bloquear a un usuario → cambia su estado en el listado. Sobre uno mismo, el botón no aparece.
 - [ ] Con la API real, el link y la ruta no aparecen.
 
 ## Riesgos / notas
 - **Los parámetros del panel no se conectan al mock.** Las cotizaciones mock usan un spread de ejemplo fijo de 1,50 % para mostrar la comisión; el porcentaje configurable del panel solo se aplica en el backend. El mock tampoco acredita intereses.
-- **Tipo de movimiento `interest`:** cuando el back acredite intereses, aparecerá en el historial y hay que sumarle la etiqueta.
+- **Tipo de movimiento `interest`:** el frontend ya lo etiqueta como "Interés", lo muestra en el historial y lo cuenta como ingreso. La opción de filtro sigue fuera mientras el backend responda 400 al filtrar por ese tipo.
 - **En el mock, un usuario bloqueado todavía puede entrar.** El rechazo del login lo hace el back.
-- **CORS:** guardar parámetros y bloquear usuarios usan `PATCH`, que hoy el CORS del back no permite.
+- **CORS:** guardar parámetros y bloquear usuarios usan `PATCH`. La última nota del backend indica que `main` permite ese método, pero falta confirmar su disponibilidad en el despliegue de Render.

@@ -4,6 +4,9 @@
 2026-10-28
 
 ## Problema
+Este apartado registra el estado inicial observado el 2026-10-28; los endpoints y las pantallas
+se actualizaron posteriormente, según el spec de operaciones con la API real del 2026-11-03.
+
 El backend ya tiene listo el mínimo funcional (registro, login, cuentas y logout), pero con `VITE_USE_MOCK=false` el front no funciona contra él:
 
 - **Login:** manda `{ email, password }` y el backend exige `{ identifier, password }`, así que responde `400`.
@@ -12,12 +15,11 @@ El backend ya tiene listo el mínimo funcional (registro, login, cuentas y logou
 - **Logout:** solo borra `localStorage`; no revoca el token en el backend.
 - **Contraseña:** el registro pide mínimo 8 caracteres y el backend exige de 15 a 128.
 - **Errores:** no se manejan `400` ni `429`.
-- **Endpoints que no existen:**
+- **Estado de endpoints en esa revisión (2026-10-28):**
   - El botón de Google y `/completar-perfil` llaman a `POST /auth/google` y `PATCH /users/me`.
   - El Dashboard llama a `/wallet/transactions`, `/wallet/transfers`, etc.
 
-  Todos responden `404`.
-  - La pantalla `/historial` solo muestra movimientos en modo mock y los identifica como datos de prueba. En modo API informa que el historial no está disponible; no llama a `/wallet/transactions` hasta que el backend publique ese endpoint.
+  En esa revisión respondían `404`.
 
 Referencia: documentos del backend `2026-10-28-1230-Minimo-Funcional-Frontend.md` y `2026-10-28-1146-Minimo-Funcional-Revision-Backend.md`.
 
@@ -38,7 +40,7 @@ Alinear el front al contrato real sin perder el modo mock:
   - `403` → se muestra el mensaje sin borrar la sesión.
 - **Flags en `src/config/features.ts`:**
   - `GOOGLE_AUTH_ENABLED = false`: oculta el botón de Google, la ruta `/completar-perfil` y la redirección a esa ruta. Los componentes se conservan.
-  - `TRANSACTIONS_ENABLED`, igual a `VITE_USE_MOCK`: sin mock no se piden movimientos ni se muestran Depositar, Cambiar y Transferir, porque el backend todavía no tiene esos endpoints. En modo mock siguen funcionando.
+  - `TRANSACTIONS_ENABLED = true`: la interfaz de operaciones e historial está habilitada. Con `VITE_USE_MOCK=true`, los servicios usan el mock; con `false`, llaman a los endpoints de la API real.
 - **Contraseña del registro:** de 8 a 24 caracteres, por decisión del equipo de front (el backend hoy exige de 15 a 128; ver notas). Se mantienen la mayúscula, el carácter especial y el rechazo de contraseñas que son solo espacios. En el login solo se exige que no esté vacía y un máximo de 128, para no bloquear cuentas creadas con el límite del backend.
 - **Mocks:** ids string, para que `VITE_USE_MOCK=true` compile y funcione con los tipos nuevos.
 - **`.env.example`:** `VITE_USE_MOCK=false`.
@@ -66,7 +68,7 @@ Alinear el front al contrato real sin perder el modo mock:
 
 ## Cómo probar
 - [x] `npm run build` y `npx eslint .` pasan.
-- [x] Con `VITE_USE_MOCK=false`, ninguna pantalla llama a `/wallet/*`, `/auth/google`, `/users/me` ni `/users/lookup`.
+- [x] Con `VITE_USE_MOCK=false`, el `WalletProvider` obtiene movimientos mediante `GET /wallet/transactions`; depósitos, cambios y transferencias llaman a sus endpoints de API real cuando se usan.
 - [x] Login envía `{ identifier, password }`.
 - [x] Registro con contraseña de menos de 8 o más de 24 caracteres se rechaza antes de llamar al backend.
 - [x] `401`, `409`, `429` y error de red muestran su mensaje sin romper la pantalla.
@@ -77,7 +79,7 @@ Alinear el front al contrato real sin perder el modo mock:
 - [ ] Flujo completo contra el backend real (registro → Dashboard → recarga → logout → login), cuando esté levantado con `CORS_ORIGINS`.
 
 ## Riesgos / notas
-- **Contraseña 8–24 vs. backend 15–128 (pendiente con backend):** el front acepta de 8 a 24 caracteres, pero `POST /auth/register` hoy rechaza menos de 15 con `400` ("Revisá los datos ingresados."). Hasta que el backend baje su mínimo a 8, las contraseñas de 8 a 14 caracteres no van a poder registrarse. Hay que pedírselo al responsable del backend.
+- **Rango de contraseña:** el backend acepta de 8 a 128 caracteres; el frontend limita el registro a 8–24 por decisión del equipo. Las contraseñas mayores a 24 las acepta el backend, pero no la validación del registro del frontend.
 - **El backend tiene que estar desplegado** con sus cambios commiteados y `CORS_ORIGINS` configurado (local `http://localhost:5173` y el dominio de Vercel). Sin eso, el navegador bloquea las llamadas.
 - **Vercel:** después de cambiar `VITE_USE_MOCK=false` y `VITE_API_URL`, hay que redeployar.
 - **Sesión:** el token dura 1 hora y no hay refresh. Al vencer, el próximo `401` lleva a `/login`.

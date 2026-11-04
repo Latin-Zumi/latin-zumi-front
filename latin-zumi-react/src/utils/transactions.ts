@@ -9,7 +9,8 @@ export const TRANSACTION_TYPE_LABELS: Record<TransactionType, string> = {
   interest: 'Interés',
 };
 
-// Habilitar interest cuando el backend acepte ese filtro; hoy responde 400.
+// interest se muestra en el historial, pero se excluye del filtro mientras el backend
+// responda 400 al recibir ese tipo.
 export const FILTERABLE_TRANSACTION_TYPES: readonly TransactionType[] = [
   'deposit',
   'transfer_sent',
