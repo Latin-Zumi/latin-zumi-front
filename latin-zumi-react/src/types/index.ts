@@ -51,6 +51,14 @@ export interface ExchangeQuote {
   expires_at: string;
 }
 
+// GET /wallet/rates. Las tasas son unidades por 1 USD, sin la comisión aplicada.
+export interface WalletRates {
+  rates: Record<Currency, number>;
+  observed_at: string;
+  exchange_spread_percent: string;
+  interest_rates: { currency: Currency; annual_percent: string }[];
+}
+
 export type TransactionErrorCode =
   | 'INVALID_AMOUNT'
   | 'UNAUTHORIZED'

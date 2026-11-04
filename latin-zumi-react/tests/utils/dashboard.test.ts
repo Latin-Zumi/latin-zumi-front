@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   calculateActivityByDay,
   convertAmount,
-  getCurrentRates,
   getRecentTransactions,
   isExpense,
   isIncome,
@@ -14,12 +13,6 @@ import { makeTransaction } from '../helpers/factories';
 const RATES: CurrencyRates = { USD: 1, ARS: 1000, COP: 4000, EUR: 0.9 };
 const at = (day: number, hour: number) => new Date(2026, 9, day, hour, 0).toISOString();
 const NOW = new Date(2026, 9, 29, 18, 0);
-
-describe('getCurrentRates', () => {
-  it('toma el dólar como base', () => {
-    expect(getCurrentRates().USD).toBe(1);
-  });
-});
 
 describe('convertAmount', () => {
   it('convierte pasando por el dólar', () => {
