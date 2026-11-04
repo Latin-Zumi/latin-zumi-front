@@ -40,11 +40,12 @@ Adaptar el front al back:
 - [ ] Con la API real: las tres secciones cargan, guardar parámetros aparece en el historial y bloquear cambia el estado.
 
 ## Riesgos / notas
-En la última verificación documentada para probarlo con la API real faltaba:
+Revisión del 2026-11-04: Render ya tiene `/admin/*` (responde `401` sin token) y el CORS permite `PATCH`. Para probarlo con la API real falta:
 
-1. Desplegar `main` del back en Render. En la última revisión `/admin/*` daba 404 y el CORS no tenía `PATCH`.
-2. Correr las migraciones `012_admin.sql` y `013_idempotency_per_user.sql` en Neon.
-3. Crear un usuario con rol `admin`.
-4. Habilitar el panel para API real después de confirmar los pasos anteriores; el código actual lo limita al modo mock.
+1. Confirmar las migraciones `012_admin.sql` y `013_idempotency_per_user.sql` en Neon.
+2. Confirmar un usuario con rol `admin`.
+3. Habilitar el panel para la API real; el código actual lo limita al modo mock.
 
-Las métricas de "hoy" cuentan las últimas 24 horas, no el día en curso. El interés se guarda, pero el back todavía no lo acredita.
+Las métricas de "hoy" cuentan las últimas 24 horas, no el día en curso.
+
+El back acredita los intereses con `POST /internal/accrue-interest`, así que hace falta un cron diario con `INTERNAL_CRON_SECRET`. Antes de cargar tasas mayores a 0 tiene que corregir cómo elige la tasa de cada día: hoy, guardar una tasa antes de que corra el proceso puede dejar ese día sin interés.
