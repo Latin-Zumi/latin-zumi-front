@@ -4,7 +4,7 @@
 2026-11-03
 
 ## Problema
-El back mergeó las rutas de `/admin/*` en `main`, con diferencias respecto del contrato de `2026-11-03-Panel-admin-backend.md`. Con el front como estaba, el panel falla al prenderlo:
+En la revisión del 2026-11-03, el back había mergeado las rutas de `/admin/*` en `main`, con diferencias respecto del contrato de `2026-11-03-Panel-admin-backend.md`. Este apartado documenta los ajustes aplicados entonces:
 
 - Todas las respuestas vienen dentro de `{ "data": ... }`.
 - `PATCH /admin/settings` recibe `interest_rates` como mapa (`{ "USD": "4.00" }`), aunque el `GET` lo devuelve como lista.
@@ -20,7 +20,7 @@ Adaptar el front al back:
 - **`TOO_MANY_REQUESTS`:** suma su mensaje en `adminService` y `transactionService`.
 - **Specs:** `ACCOUNT_BLOCKED` y las diferencias de contrato.
 
-`ADMIN_ENABLED` sigue atado al mock hasta que Render tenga el back nuevo.
+`ADMIN_ENABLED` continúa habilitado solo cuando `VITE_USE_MOCK=true`. Para usar el panel con la API real deben confirmarse el despliegue de las rutas y las migraciones requeridas antes de habilitarlo en el frontend.
 
 ## Archivos afectados
 - `src/services/adminService.ts`, `src/services/transactionService.ts`, `src/services/authService.ts`
@@ -40,11 +40,11 @@ Adaptar el front al back:
 - [ ] Con la API real: las tres secciones cargan, guardar parámetros aparece en el historial y bloquear cambia el estado.
 
 ## Riesgos / notas
-Para probarlo con la API real falta:
+En la última verificación documentada para probarlo con la API real faltaba:
 
 1. Desplegar `main` del back en Render. En la última revisión `/admin/*` daba 404 y el CORS no tenía `PATCH`.
 2. Correr las migraciones `012_admin.sql` y `013_idempotency_per_user.sql` en Neon.
 3. Crear un usuario con rol `admin`.
-4. Cambiar `ADMIN_ENABLED` a `true` en el front.
+4. Habilitar el panel para API real después de confirmar los pasos anteriores; el código actual lo limita al modo mock.
 
 Las métricas de "hoy" cuentan las últimas 24 horas, no el día en curso. El interés se guarda, pero el back todavía no lo acredita.
