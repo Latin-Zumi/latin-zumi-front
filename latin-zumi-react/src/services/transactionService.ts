@@ -29,6 +29,7 @@ const ERROR_MESSAGES: Record<TransactionErrorCode, string> = {
   QUOTE_EXPIRED: 'La cotización venció. Pedí una nueva.',
   QUOTE_ALREADY_USED: 'Esa cotización ya se usó. Pedí una nueva.',
   AMOUNT_TOO_SMALL: 'El monto es muy chico: convertido da menos de 0,01.',
+  AMOUNT_TOO_LARGE: 'El monto es muy grande: convertido supera el máximo permitido.',
   SAME_CURRENCY: 'Elegí dos monedas distintas.',
   CONVERSION_UNAVAILABLE: 'No hay una cotización disponible en este momento. Probá más tarde.',
   IDEMPOTENCY_CONFLICT: 'Esta operación ya se procesó con otros datos. Empezá de nuevo.',

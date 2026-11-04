@@ -161,6 +161,7 @@ describe('transactionService con la API real', () => {
     [400, { code: 'INVALID_IDEMPOTENCY_KEY' }, 'INVALID_IDEMPOTENCY_KEY', 'No pudimos procesar la operación. Empezá de nuevo.'],
     [429, { code: 'TOO_MANY_REQUESTS' }, 'TOO_MANY_REQUESTS', 'Demasiados intentos. Esperá unos minutos.'],
     [503, { code: 'CONVERSION_UNAVAILABLE' }, 'CONVERSION_UNAVAILABLE', 'No hay una cotización disponible en este momento. Probá más tarde.'],
+    [422, { code: 'AMOUNT_TOO_LARGE' }, 'AMOUNT_TOO_LARGE', 'El monto es muy grande: convertido supera el máximo permitido.'],
     [401, undefined, 'UNAUTHORIZED', 'Tu sesión expiró. Volvé a iniciar sesión.'],
     [500, { code: 'ALGO_NUEVO' }, 'UNKNOWN', 'No pudimos completar la operación. Probá de nuevo.'],
   ])('con status %i y body %j falla con %s', async (status, body, code, message) => {
