@@ -1,13 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FILTERABLE_TRANSACTION_TYPES,
   getTransactionDescription,
   groupTransactionsByDay,
+  TRANSACTION_TYPE_LABELS,
 } from '../../src/utils/transactions';
 import { makeTransaction } from '../helpers/factories';
 
 // Fechas en hora local, igual que las agrupa la app
 const at = (day: number, hour: number) => new Date(2026, 9, day, hour, 0).toISOString();
 const NOW = new Date(2026, 9, 29, 18, 0); // jueves 29 de octubre
+
+describe('tipos de movimiento', () => {
+  it('etiqueta el interés y lo excluye de las opciones filtrables', () => {
+    expect(TRANSACTION_TYPE_LABELS.interest).toBe('Interés');
+    expect(FILTERABLE_TRANSACTION_TYPES).not.toContain('interest');
+  });
+});
 
 describe('getTransactionDescription', () => {
   it('muestra el nombre de la otra persona en las transferencias', () => {

@@ -74,8 +74,9 @@ export interface DepositData {
 const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-// Movimiento tal como lo devuelve el backend: sin contraparte o sin cambio vienen en null
-export type TransactionResponse = Omit<Transaction, 'counterparty' | 'exchange'> & {
+// Movimiento tal como lo devuelve el backend: relaciones ausentes vienen en null
+export type TransactionResponse = Omit<Transaction, 'counterparty' | 'exchange' | 'description'> & {
+  description?: string | null;
   counterparty: Transaction['counterparty'] | null;
   exchange: Transaction['exchange'] | null;
 };
@@ -85,9 +86,15 @@ interface OperationResponse {
   balances: AccountResponse[];
 }
 
-export function toTransaction({ counterparty, exchange, ...transaction }: TransactionResponse): Transaction {
+export function toTransaction({
+  counterparty,
+  exchange,
+  description,
+  ...transaction
+}: TransactionResponse): Transaction {
   return {
     ...transaction,
+    description: description ?? (transaction.type === 'interest' ? 'Interés ganado' : ''),
     ...(counterparty && { counterparty }),
     ...(exchange && { exchange }),
   };

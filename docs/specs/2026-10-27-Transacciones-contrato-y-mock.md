@@ -41,7 +41,7 @@ Todos los endpoints llevan `Authorization: Bearer <token del backend>`.
 ```json
 {
   "id": "uuid",
-  "type": "deposit | transfer_sent | transfer_received | exchange",
+  "type": "deposit | transfer_sent | transfer_received | exchange | withdrawal | interest",
   "status": "completed | pending | failed",
   "currency": "ARS",
   "amount": "1500.50",
@@ -52,6 +52,11 @@ Todos los endpoints llevan `Authorization: Bearer <token del backend>`.
 }
 ```
 `counterparty` va solo en transferencias y `exchange` solo en cambios de moneda.
+`interest` se etiqueta como **Interés**, cuenta como ingreso en el dashboard y no lleva
+`counterparty` ni `exchange`. Si el backend omite su descripción, el frontend muestra
+**Interés ganado**. Los movimientos de interés aparecen en las listas, pero por ahora
+no se ofrece `interest` en el filtro de tipo porque el backend responde 400 al filtrar
+por ese valor; se habilitará cuando el backend lo acepte.
 
 **Endpoints**
 
