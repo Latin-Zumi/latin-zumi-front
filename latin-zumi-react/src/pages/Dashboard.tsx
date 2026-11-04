@@ -13,6 +13,7 @@ import ExchangeModal from '../components/wallet/ExchangeModal';
 import { TRANSACTIONS_ENABLED } from '../config/features';
 import { useAuth } from '../context/auth';
 import { useWallet } from '../context/wallet';
+import { useWalletRates } from '../hooks/useWalletRates';
 import {
   TransactionError,
   lookupUser,
@@ -20,7 +21,6 @@ import {
 } from '../services/transactionService';
 import {
   calculateActivityByDay,
-  getCurrentRates,
   getRecentTransactions,
   isIncome,
 } from '../utils/dashboard';
@@ -72,6 +72,7 @@ function isCurrency(value: string): value is Currency {
 export default function Dashboard() {
   const { user } = useAuth();
   const wallet = useWallet();
+  const walletRates = useWalletRates();
   const [transferOpen, setTransferOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [exchangeOpen, setExchangeOpen] = useState(false);
@@ -115,20 +116,16 @@ export default function Dashboard() {
     transferAmount,
     getAvailableAmount(balances, selectedTransferCurrency),
   );
-  const rates = getCurrentRates();
   // El saldo grande es el de la moneda del usuario; el resto se nombra en una frase
   const mainBalance =
     balances.find((balance) => balance.currency === preferredCurrency) ?? balances[0];
   const otherBalances = balances.filter((balance) => balance !== mainBalance);
-  const activityByDay = calculateActivityByDay(
-    transactions,
-    preferredCurrency,
-    rates,
-    new Date(),
-    7,
-  );
-  const weekIncome = activityByDay.reduce((total, day) => total + day.income, 0);
-  const weekExpenses = activityByDay.reduce((total, day) => total + day.expenses, 0);
+  // Sumar movimientos de varias monedas requiere la cotización real
+  const activityByDay = walletRates.data
+    ? calculateActivityByDay(transactions, preferredCurrency, walletRates.data.rates, new Date(), 7)
+    : null;
+  const weekIncome = activityByDay?.reduce((total, day) => total + day.income, 0) ?? 0;
+  const weekExpenses = activityByDay?.reduce((total, day) => total + day.expenses, 0) ?? 0;
   const recentGroups = groupTransactionsByDay(
     getRecentTransactions(transactions, 5),
     new Date(),
@@ -272,7 +269,12 @@ export default function Dashboard() {
         )}
       </section>
 
-      <WalletRatesAndCosts balances={balances} rates={rates} />
+      <WalletRatesAndCosts
+        data={walletRates.data}
+        isLoading={walletRates.isLoading}
+        hasError={walletRates.hasError}
+        onRetry={walletRates.reload}
+      />
 
       <div className="dashboard__content">
         <section className="dashboard__movements" aria-labelledby="movements-title">
@@ -329,17 +331,27 @@ export default function Dashboard() {
 
         <aside className="feature-surface dashboard__week" aria-labelledby="week-title">
           <h2 id="week-title">Esta semana</h2>
-          <ActivityChart data={activityByDay} currency={preferredCurrency} />
-          <dl className="dashboard__week-totals">
-            <div>
-              <dt>Entró</dt>
-              <dd>{formatMoney(weekIncome, preferredCurrency)}</dd>
-            </div>
-            <div>
-              <dt>Salió</dt>
-              <dd>{formatMoney(weekExpenses, preferredCurrency)}</dd>
-            </div>
-          </dl>
+          {activityByDay ? (
+            <>
+              <ActivityChart data={activityByDay} currency={preferredCurrency} />
+              <dl className="dashboard__week-totals">
+                <div>
+                  <dt>Entró</dt>
+                  <dd>{formatMoney(weekIncome, preferredCurrency)}</dd>
+                </div>
+                <div>
+                  <dt>Salió</dt>
+                  <dd>{formatMoney(weekExpenses, preferredCurrency)}</dd>
+                </div>
+              </dl>
+            </>
+          ) : (
+            <p className="dashboard__muted">
+              {walletRates.isLoading
+                ? 'Calculando tu semana...'
+                : 'No podemos calcular tu semana sin las tasas de cambio.'}
+            </p>
+          )}
         </aside>
       </div>
 
