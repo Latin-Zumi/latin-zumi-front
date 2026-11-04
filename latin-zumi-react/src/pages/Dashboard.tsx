@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import ActivityChart from '../components/ActivityChart';
 import AvailableBalance from '../components/wallet/AvailableBalance';
+import WalletRatesAndCosts from '../components/wallet/WalletRatesAndCosts';
 import { EmptyState, ErrorState, LoadingState } from '../components/states';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -270,6 +271,8 @@ export default function Dashboard() {
           </div>
         )}
       </section>
+
+      <WalletRatesAndCosts balances={balances} rates={rates} />
 
       <div className="dashboard__content">
         <section className="dashboard__movements" aria-labelledby="movements-title">
