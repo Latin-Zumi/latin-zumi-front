@@ -33,7 +33,9 @@ describe('isIncome e isExpense', () => {
   it('cuentan depósitos y transferencias recibidas como ingreso, y enviadas como gasto', () => {
     expect(isIncome(makeTransaction({ type: 'deposit' }))).toBe(true);
     expect(isIncome(makeTransaction({ type: 'transfer_received' }))).toBe(true);
+    expect(isIncome(makeTransaction({ type: 'interest' }))).toBe(true);
     expect(isExpense(makeTransaction({ type: 'transfer_sent' }))).toBe(true);
+    expect(isExpense(makeTransaction({ type: 'interest' }))).toBe(false);
   });
 
   it('no cuentan el cambio de moneda como ingreso ni como gasto', () => {
@@ -58,6 +60,7 @@ describe('calculateActivityByDay', () => {
       [
         makeTransaction({ type: 'deposit', currency: 'ARS', amount: '500.00', created_at: at(29, 9) }),
         makeTransaction({ type: 'deposit', currency: 'USD', amount: '2.00', created_at: at(29, 11) }),
+        makeTransaction({ type: 'interest', currency: 'ARS', amount: '75.00', created_at: at(29, 12) }),
         makeTransaction({ type: 'transfer_sent', currency: 'ARS', amount: '300.00', created_at: at(28, 15) }),
         makeTransaction({ type: 'exchange', currency: 'ARS', amount: '999.00', created_at: at(28, 16) }),
       ],
@@ -69,7 +72,7 @@ describe('calculateActivityByDay', () => {
 
     expect(days).toEqual([
       { date: '2026-10-28', income: 0, expenses: 300 },
-      { date: '2026-10-29', income: 2500, expenses: 0 },
+      { date: '2026-10-29', income: 2575, expenses: 0 },
     ]);
   });
 

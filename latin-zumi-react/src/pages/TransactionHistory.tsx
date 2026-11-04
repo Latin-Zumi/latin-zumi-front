@@ -8,6 +8,7 @@ import { isIncome } from '../utils/dashboard';
 import {
   formatTransactionDate,
   getTransactionDescription,
+  FILTERABLE_TRANSACTION_TYPES,
   TRANSACTION_STATUS_LABELS,
   TRANSACTION_TYPE_LABELS,
 } from '../utils/transactions';
@@ -97,8 +98,8 @@ export default function TransactionHistory() {
               Tipo de movimiento
               <select value={type} onChange={(event) => setType(event.target.value)}>
                 <option value="">Todos los tipos</option>
-                {Object.entries(TRANSACTION_TYPE_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                {FILTERABLE_TRANSACTION_TYPES.map((value) => (
+                  <option key={value} value={value}>{TRANSACTION_TYPE_LABELS[value]}</option>
                 ))}
               </select>
             </label>

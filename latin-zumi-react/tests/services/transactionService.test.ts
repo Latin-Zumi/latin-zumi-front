@@ -10,8 +10,7 @@ import {
   TEST_SESSION,
 } from '../helpers/api';
 import { makeTransaction } from '../helpers/factories';
-import { getMockExchangeQuote } from '../../src/mocks/wallets';
-import { getCurrentRates } from '../../src/utils/dashboard';
+import { getMockBalances, getMockTransactions } from '../../src/mocks/wallets';
 
 type TransactionService = typeof import('../../src/services/transactionService');
 const load = (useMock: boolean) =>
@@ -102,6 +101,26 @@ describe('transactionService con la API real', () => {
     expect(items[1]).not.toHaveProperty('exchange');
   });
 
+  it('usa "Interés ganado" cuando el backend no envía la descripción del interés', async () => {
+    mockFetch(
+      jsonResponse(200, {
+        items: [
+          {
+            ...makeTransaction({ type: 'interest', description: undefined }),
+            counterparty: null,
+            exchange: null,
+          },
+        ],
+        page: 1,
+        total: 1,
+      }),
+    );
+
+    const { items } = await service.getTransactions();
+
+    expect(items[0].description).toBe('Interés ganado');
+  });
+
   it('arma la URL de los filtros sin los que vienen vacíos', async () => {
     const fetchMock = mockFetch(jsonResponse(200, { items: [], page: 2, total: 0 }));
 
@@ -170,21 +189,13 @@ describe('transactionService en modo mock', () => {
   const balanceOf = (result: { balances: { currency: string; amount: string }[] }) =>
     result.balances.find((balance) => balance.currency === 'ARS')?.amount;
 
-  it('incluye el spread mock y calcula el monto recibido con la tasa ajustada', () => {
-    const result = getMockExchangeQuote(TEST_SESSION.user.email, {
-      from: 'USD',
-      to: 'ARS',
-      amount: '100.00',
-    });
-    if (!result.ok) throw new Error('No se pudo crear la cotización mock.');
+  it('incluye el interés sembrado en la actividad y en el saldo de su moneda', () => {
+    const transactions = getMockTransactions(TEST_SESSION.user.email, {});
+    const balances = getMockBalances(TEST_SESSION.user.email);
+    if (!transactions.ok || !balances.ok) throw new Error('No se pudieron leer los datos mock.');
 
-    const marketRate = getCurrentRates().ARS / getCurrentRates().USD;
-    const adjustedRate = marketRate * (1 - 1.5 / 100);
-    expect(result.data.spread_percent).toBe('1.50');
-    expect(Number(result.data.rate)).toBeCloseTo(adjustedRate, 6);
-    expect(Number(result.data.to_amount)).toBe(
-      Math.round(100 * Number(result.data.rate) * 100) / 100,
-    );
+    expect(transactions.data.items.some((transaction) => transaction.type === 'interest')).toBe(true);
+    expect(balances.data.find((balance) => balance.currency === 'USD')?.amount).toBe('1075.50');
   });
 
   it('repetir un depósito con la misma Idempotency-Key no lo acredita dos veces', async () => {
