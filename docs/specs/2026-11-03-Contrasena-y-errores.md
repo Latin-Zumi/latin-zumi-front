@@ -72,5 +72,5 @@ Probado con el mock y con tests. Falta probarlo contra el back real.
 ## Riesgos / notas
 - **Largo de la contraseña:** el back ahora acepta de 8 a 128 caracteres; el front sigue en 8 a 24 por decisión del equipo. El login acepta hasta 128, para no dejar afuera cuentas con contraseñas largas.
 - **`PASSWORD_RESET_URL` en Render** tiene que apuntar al front de Vercel: `https://latin-zumi-front-1x4s.vercel.app/restablecer-contrasena`. Si no, el link del email lleva a `localhost`.
-- **CORS:** `main` del back ya permite `PATCH`, pero falta desplegarlo: Render todavía responde `GET, POST`. Sin eso no funcionan completar el perfil ni el panel de admin.
+- **CORS:** Render ya permite `PATCH` desde Vercel (revisado el 2026-11-04), que es lo que necesitan completar el perfil y el panel de admin.
 - **El `403` por contraseña vieja no trae `code`.** El front lo reconoce por el flag del login. Si back le agrega un código, por ejemplo `PASSWORD_CHANGE_REQUIRED`, los otros servicios también podrían reconocerlo.

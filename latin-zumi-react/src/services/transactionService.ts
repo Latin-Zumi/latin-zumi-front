@@ -55,6 +55,8 @@ export class TransactionError extends Error {
 export interface TransactionFilters {
   type?: TransactionType;
   currency?: Currency;
+  from?: string; // instante con zona horaria (ISO 8601)
+  to?: string;
   page?: number;
   limit?: number;
 }

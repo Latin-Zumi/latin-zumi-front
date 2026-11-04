@@ -30,7 +30,7 @@ interface WalletData {
 
 async function fetchWallet(email: string): Promise<WalletData> {
   try {
-    // Sin backend de movimientos todavía: con la API real solo se piden los saldos
+    // Con TRANSACTIONS_ENABLED apagado solo se piden los saldos
     const [balances, page] = await Promise.all([
       getBalances(),
       TRANSACTIONS_ENABLED ? getTransactions({ limit: RECENT_LIMIT }) : null,

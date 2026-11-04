@@ -109,7 +109,7 @@ async function requestSession(
 
 const BLOCKED_MESSAGE = 'Tu cuenta está bloqueada. Escribinos para reactivarla.';
 
-// La lógica sale del status HTTP: el body de los errores no es uniforme (el 429 manda { error })
+// Los mensajes salen del status HTTP, sin depender del código que manda el back
 function authErrorFor(status: number, messages: Record<number, string>, fallback: string): AuthError {
   if (messages[status]) return new AuthError(messages[status]);
   // El back responde 403 ACCOUNT_BLOCKED cuando un admin bloqueó la cuenta

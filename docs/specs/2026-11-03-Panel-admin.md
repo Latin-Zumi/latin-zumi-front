@@ -74,4 +74,4 @@ Es solo comodidad: el back tiene que rechazar con `403` cualquier pedido que no 
 - **Los parámetros del panel no se conectan al mock.** Las cotizaciones mock usan un spread de ejemplo fijo de 1,50 % para mostrar la comisión; el porcentaje configurable del panel solo se aplica en el backend. El mock tampoco acredita intereses.
 - **Tipo de movimiento `interest`:** el frontend ya lo etiqueta como "Interés", lo muestra en el historial y lo cuenta como ingreso. La opción de filtro sigue fuera mientras el backend responda 400 al filtrar por ese tipo.
 - **En el mock, un usuario bloqueado todavía puede entrar.** El rechazo del login lo hace el back.
-- **CORS:** guardar parámetros y bloquear usuarios usan `PATCH`. La última nota del backend indica que `main` permite ese método, pero falta confirmar su disponibilidad en el despliegue de Render.
+- **CORS:** guardar parámetros y bloquear usuarios usan `PATCH`, que Render ya permite desde Vercel (revisado el 2026-11-04).

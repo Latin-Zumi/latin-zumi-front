@@ -121,6 +121,16 @@ describe('transactionService con la API real', () => {
     expect(items[0].description).toBe('Interés ganado');
   });
 
+  it('manda las fechas en la URL', async () => {
+    const fetchMock = mockFetch(jsonResponse(200, { items: [], page: 1, total: 0 }));
+
+    await service.getTransactions({ from: '2026-11-01T03:00:00.000Z', to: '2026-11-05T02:59:59.999Z' });
+
+    const { searchParams } = new URL(fetchCall(fetchMock).url);
+    expect(searchParams.get('from')).toBe('2026-11-01T03:00:00.000Z');
+    expect(searchParams.get('to')).toBe('2026-11-05T02:59:59.999Z');
+  });
+
   it('arma la URL de los filtros sin los que vienen vacíos', async () => {
     const fetchMock = mockFetch(jsonResponse(200, { items: [], page: 2, total: 0 }));
 
@@ -196,6 +206,17 @@ describe('transactionService en modo mock', () => {
 
     expect(transactions.data.items.some((transaction) => transaction.type === 'interest')).toBe(true);
     expect(balances.data.find((balance) => balance.currency === 'USD')?.amount).toBe('1075.50');
+  });
+
+  it('filtra por fechas y ordena del más reciente al más antiguo', async () => {
+    const { items: all } = await run(service.getTransactions({ limit: 100 }));
+    const times = all.map((transaction) => new Date(transaction.created_at).getTime());
+    expect(times).toEqual([...times].sort((first, second) => second - first));
+
+    const { created_at: newest } = all[0];
+    const { items } = await run(service.getTransactions({ from: newest, to: newest, limit: 100 }));
+    expect(items.map((transaction) => transaction.id)).toContain(all[0].id);
+    expect(items.every((transaction) => transaction.created_at === newest)).toBe(true);
   });
 
   it('repetir un depósito con la misma Idempotency-Key no lo acredita dos veces', async () => {
