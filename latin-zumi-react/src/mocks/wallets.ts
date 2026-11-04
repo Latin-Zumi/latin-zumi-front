@@ -153,7 +153,14 @@ export function getMockBalances(email: string): MockResult<Balance[]> {
 
 export function getMockTransactions(
   email: string,
-  filters: { type?: TransactionType; currency?: Currency; page?: number; limit?: number },
+  filters: {
+    type?: TransactionType;
+    currency?: Currency;
+    from?: string;
+    to?: string;
+    page?: number;
+    limit?: number;
+  },
 ): MockResult<TransactionPage> {
   const wallets = readWallets();
   const wallet = getWallet(wallets, email);
@@ -161,11 +168,17 @@ export function getMockTransactions(
 
   const page = filters.page ?? 1;
   const limit = filters.limit ?? 20;
-  const matching = wallet.transactions.filter(
-    (transaction) =>
-      (!filters.type || transaction.type === filters.type) &&
-      (!filters.currency || transaction.currency === filters.currency),
-  );
+  const time = (value: string) => new Date(value).getTime();
+  // Del más reciente al más antiguo, como el back
+  const matching = wallet.transactions
+    .filter(
+      (transaction) =>
+        (!filters.type || transaction.type === filters.type) &&
+        (!filters.currency || transaction.currency === filters.currency) &&
+        (!filters.from || time(transaction.created_at) >= time(filters.from)) &&
+        (!filters.to || time(transaction.created_at) <= time(filters.to)),
+    )
+    .sort((first, second) => time(second.created_at) - time(first.created_at));
   return ok({
     items: matching.slice((page - 1) * limit, page * limit),
     page,
