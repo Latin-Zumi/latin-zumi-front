@@ -90,9 +90,11 @@ export default function TransactionHistory() {
         </section>
       ) : (
         <>
-          <p className="transaction-history__demo-notice" role="note">
-            Modo de pruebas: estos movimientos son datos mock y no representan operaciones reales.
-          </p>
+          {import.meta.env.VITE_USE_MOCK === 'true' && (
+            <p className="transaction-history__demo-notice" role="note">
+              Modo de pruebas: estos movimientos son datos mock y no representan operaciones reales.
+            </p>
+          )}
           <section className="transaction-history__filters" aria-label="Filtrar movimientos">
             <label>
               Tipo de movimiento
