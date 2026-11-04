@@ -67,10 +67,18 @@ por ese valor; se habilitará cuando el backend lo acepte.
 | `GET /users/lookup` | `?email=` | `{ nombre }`, para confirmar a quién se transfiere |
 | `POST /wallet/transfers` | `{ recipient_email, currency, amount, note? }` | `{ transaction, balances }` |
 | `POST /wallet/deposits` | `{ currency, amount }` | `{ transaction, balances }` |
-| `GET /wallet/exchange/quote` | `?from=&to=&amount=` | `{ quote_id, rate, to_amount, expires_at }` |
+| `GET /wallet/exchange/quote` | `?from=&to=&amount=` | `{ quote_id, rate, to_amount, spread_percent, expires_at }` |
 | `POST /wallet/exchanges` | `{ quote_id }` | `{ transaction, balances }` |
 
 Todas las operaciones devuelven también los saldos actualizados, así el frontend no tiene que pedirlos aparte.
+La cotización incluye `spread_percent` como string. Según el contrato del backend, `rate` es la
+tasa de mercado aplicada con el spread (`tasa de mercado × (1 − spread / 100)`) y `to_amount`
+se calcula con esa tasa.
+
+Antes de confirmar el cambio, el frontend muestra la cotización, el monto que se recibirá y la
+comisión como porcentaje en formato `es-AR` (hasta 2 decimales, sin ceros finales). Si el valor
+es `0`, muestra **Sin comisión**; si la respuesta no incluye `spread_percent`, no muestra la fila.
+El campo es opcional en el front para aceptar respuestas del contrato anterior.
 
 **Códigos de error**
 
