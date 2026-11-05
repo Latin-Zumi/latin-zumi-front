@@ -53,7 +53,7 @@ export default function PasswordRecovery() {
           // El mismo mensaje exista o no la cuenta, para no revelar qué emails están registrados
           <p className="form-notice" role="status">
             Si {email.trim()} está registrado, te enviamos un correo con un enlace para
-            restablecer tu contraseña. Usalo pronto: vence a los pocos minutos.
+            restablecer tu contraseña. Usalo pronto: el correo indica cuándo vence.
           </p>
         ) : (
           <form onSubmit={(event) => void handleSubmit(event)} noValidate>
