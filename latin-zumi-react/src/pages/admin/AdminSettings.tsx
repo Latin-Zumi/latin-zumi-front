@@ -180,7 +180,7 @@ export default function AdminSettings() {
                 ))}
               </div>
               <p className="admin-card__note">
-                Se acredita una vez por día. Un cambio vale desde el día siguiente.
+                Se acredita una vez por día, con la tasa vigente al momento de acreditar.
               </p>
             </fieldset>
 
