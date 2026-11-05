@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import Modal from '../../../src/components/ui/Modal';
 
@@ -77,5 +77,66 @@ describe('Modal', () => {
 
     expect(screen.getByRole('button', { name: 'Depositar' })).toHaveFocus();
     expect(document.body.style.overflow).toBe('');
+  });
+
+  describe('con un campo que redibuja al escribir', () => {
+    // onClose es una función nueva en cada render, como en los modales de la billetera
+    function TransferPage({ onClose = () => {} }: { onClose?: () => void }) {
+      const [isOpen, setIsOpen] = useState(false);
+      const [amount, setAmount] = useState('');
+      return (
+        <>
+          <button type="button" onClick={() => setIsOpen(true)}>Transferir</button>
+          <Modal
+            isOpen={isOpen}
+            onClose={() => {
+              onClose();
+              setIsOpen(false);
+            }}
+            title="Transferir"
+            closeOnEscape={amount !== 'bloqueado'}
+          >
+            <input aria-label="Monto" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          </Modal>
+        </>
+      );
+    }
+
+    async function openAndFocus(onClose?: () => void) {
+      const user = userEvent.setup();
+      render(<TransferPage onClose={onClose} />);
+      await user.click(screen.getByRole('button', { name: 'Transferir' }));
+      await user.click(screen.getByRole('textbox', { name: 'Monto' }));
+      return user;
+    }
+
+    it('el campo conserva el foco en cada tecla', async () => {
+      const user = await openAndFocus();
+
+      await user.keyboard('123');
+
+      expect(screen.getByRole('textbox', { name: 'Monto' })).toHaveValue('123');
+      expect(screen.getByRole('textbox', { name: 'Monto' })).toHaveFocus();
+    });
+
+    it('el campo conserva el foco si cambia closeOnEscape', async () => {
+      const user = await openAndFocus();
+
+      await user.keyboard('bloqueado');
+
+      expect(screen.getByRole('textbox', { name: 'Monto' })).toHaveFocus();
+    });
+
+    it('después de escribir, Escape cierra y el foco vuelve al botón', async () => {
+      const onClose = vi.fn();
+      const user = await openAndFocus(onClose);
+
+      await user.keyboard('12{Escape}');
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Transferir' })).toHaveFocus();
+      expect(document.body.style.overflow).toBe('');
+    });
   });
 });

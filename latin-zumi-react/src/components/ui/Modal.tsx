@@ -23,7 +23,14 @@ export function Modal({
 }: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLElement>(null);
+  // onClose suele ser una función nueva en cada render: no puede volver a disparar los efectos
+  const onCloseRef = useRef(onClose);
 
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Solo al abrir y al cerrar: si corriera en cada render, le sacaría el foco al campo donde se escribe
   useEffect(() => {
     if (!isOpen) return;
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -31,17 +38,22 @@ export function Modal({
     document.body.style.overflow = "hidden";
     dialogRef.current?.focus();
 
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !closeOnEscape) return;
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && closeOnEscape) onClose();
+      if (event.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", handleKeyDown);
 
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener("keydown", handleKeyDown);
-      previousFocus?.focus();
-    };
-  }, [closeOnEscape, isOpen, onClose]);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [closeOnEscape, isOpen]);
 
   if (!isOpen) return null;
 
