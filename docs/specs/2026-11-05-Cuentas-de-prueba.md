@@ -14,7 +14,7 @@ Mantener un inventario con el email, el rol, las monedas con saldo y el propósi
 | Cuenta | Email | Rol | Monedas con saldo | Para qué prueba sirve |
 |---|---|---|---|---|
 | Sofía (Colombia) | sofi.latinzumi@proton.me | Usuario sin rol admin | Una sola moneda: COP | Comprobar la experiencia de un usuario estándar y de una billetera con saldo en una única moneda; verificar que no accede a funciones de administración.|
-| Marcela | marce.latinzumi@proton.me | Usuario sin rol admin | ARS, USD, EUR, COP | Comprobar el saldo unificado con varias monedas, el cambio de moneda con comisión y las transferencias con la cuenta de Sofía (enviar y recibir). |
+| Marcela | marce.latinzumi@proton.me | Usuario sin rol admin | ARS, USD, EUR, COP | Comprobar el saldo unificado con varias monedas, el cambio de moneda y las transferencias con la cuenta de Sofía (enviar y recibir). |
 
 ## Cómo recrearlas desde la app
 1. Registrarse en `/register` con nombre, email, país y contraseña. El registro no permite elegir moneda ni rol: la cuenta nace sin rol admin.
